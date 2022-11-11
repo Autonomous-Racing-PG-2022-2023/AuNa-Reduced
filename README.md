@@ -75,26 +75,31 @@ After that, ROS2 and MATLAB/Simulink are connected.
 
 ### OMNeT++ and Artery
 
-OMNeT++ can be installed as described here:
+Please install OMNeT++ 5.x as described here:
 
     https://omnetpp.org/
-    
+
 After that, install the Artery framework. Clone the following GitHub repository:
 
     git clone --recurse-submodule https://github.com/HarunTeper/artery-ros2
-    
+
 Then, follow the installation guide here:
 
     http://artery.v2x-research.eu/install/
-    
-Build the artery-ros2 directory as follows:
+
+Before building artery, move to the AuNa folder and run the following commands:
 
     source /opt/ros/foxy/setup.bash
+    colcon build --symlink-install
+    source install/setup.bash
+
+In the same terminal, build the artery-ros2 directory as follows:
+
     mkdir build
     cd build
     cmake ..
     cmake --build .
-	
+
 ### File stucture:
 ```
 ├── car_simulator
@@ -169,26 +174,3 @@ In general, it is possible to add arbitrary services to Artery to evaluate other
 ## Acknowledgements
 
 We would like to thank all the authors who helped to extend the framework. In particular, we would like to thank Anggera Bayuwindra, Enio Prates Vasconcelos Filho, Raphael Riebl, and Ricardo Severino for providing their components and implementation details for the integration.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
