@@ -29,6 +29,13 @@ class omnetRX : public rclcpp::Node
         {
             ros_its_msgs::msg::CAM cacc_msg;
 
+            // cacc_msg.x // m
+            // cacc_msg.y // m
+            // cacc_msg.theta // radian [0,pi] [-pi,-0]
+            // cacc_msg.thetadot // radian/s, positive left, negative right
+            // cacc_msg.v // m/s
+            // cacc_msg.vdot // m/s^2
+
             cacc_msg.x = (float)msg->reference_position.longitude/10/scale_factor; //0.1m
             cacc_msg.y = (float)msg->reference_position.latitude/10/scale_factor; //0.1m
             cacc_msg.theta = (((float)msg->high_frequency_container.heading.value/10)*M_PI/180 - (2*M_PI) * floor(((float)msg->high_frequency_container.heading.value/10)*M_PI/180 / (M_PI)));//0.1 degree

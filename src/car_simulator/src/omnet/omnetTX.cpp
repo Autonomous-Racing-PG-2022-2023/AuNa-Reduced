@@ -73,6 +73,7 @@ class omnetTX : public rclcpp::Node
             float old_speed = this->speed;
             this->speed = sqrt(pow(msg->twist.twist.linear.x,2)+pow(msg->twist.twist.linear.y,2));//absolute speed without direction
             this->acceleration = (this->speed-old_speed)/odom_rate;
+            // Get the yaw rate from the z-coordinate of the odometry twist
             this->yaw_rate = msg->twist.twist.angular.z; //yaw rate in radians/s
             this->yaw_rate = this->yaw_rate * 180 / M_PI; //yaw rate in degree/s
             this->curvature = this->yaw_rate/std::max(0.01f,this->speed);
@@ -85,6 +86,7 @@ class omnetTX : public rclcpp::Node
             this->latitude = msg->pose.position.y;
             this->altitude = msg->pose.position.z;
 
+            // Convert quaternion from pose to rpy, to get orientation from y-coordinate
             std::vector<double> rpy = euler_from_quaternion(std::vector<double>{msg->pose.orientation.x,msg->pose.orientation.y,msg->pose.orientation.z,msg->pose.orientation.w});
 
             this->heading = rpy[2]; // get heading in radians
@@ -114,14 +116,14 @@ class omnetTX : public rclcpp::Node
         rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_subscriber;
 
         std::string robot_name;
-        float latitude;
-        float longitude;
-        float altitude;
-        float heading;
-        float speed;
-        float acceleration;
-        float yaw_rate;
-        float curvature;
+        float latitude; //m
+        float longitude; //m
+        float altitude; //m
+        float heading; //degree[0,360]
+        float speed; //m/s
+        float acceleration; //m/s^2
+        float yaw_rate; //degree/s, positive left, negative right
+        float curvature; //degree/m
 
         // Odometry rate for acceleration
         float odom_rate = 0.01;
