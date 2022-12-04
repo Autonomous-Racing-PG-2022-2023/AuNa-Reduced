@@ -39,66 +39,10 @@ Run the following commands in the terminal before using ROS2:
     
     export GAZEBO_MODEL_DATABASE_URI=http://models.gazebosim.org/
     export TURTLEBOT3_MODEL=waffle
-    export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:/opt/ros/foxy/share/turtlebot3_gazebo/models
+    export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:/opt/ros/galactic/share/turtlebot3_gazebo/models
     
     source /opt/ros/galactic/setup.bash
     source ~/AuNa/install/setup.bash
-    
-### MATLAB and Simulink
-
-First, install MATLAB and Simulink as described here:
-
-    https://de.mathworks.com/help/install/
-    https://de.mathworks.com/products/matlab.html
-    https://de.mathworks.com/products/simulink.html
-
-Install Python3.9:
-
-    sudo add-apt-repository ppa:deadsnakes/ppa
-    sudo apt-get update
-    sudo apt install python3.9 python3.9-venv libpython3.9
-    
-Create symlinks to the Python3.9 installation:
-
-    sudo ln -s /usr/lib/x86_64-linux-gnu/libpython3.9.so.1 /usr/lib/libpython3.9.so.1
-    sudo ln -s /usr/lib/x86_64-linux-gnu/libpython3.9.so.1.0 /usr/lib/libpython3.9.so.1.0
-    
-Install numpy:
-
-    sudo apt-get install python-numpy
-    
-In every MATLAB script, you need to add the following line at the beginning:
-    
-    pyenv('Version','/usr/bin/python3.9');
-    
-After that, ROS2 and MATLAB/Simulink are connected.
-
-### OMNeT++ and Artery
-
-Please install OMNeT++ 5.x as described here:
-
-    https://omnetpp.org/
-
-After that, install the Artery framework. Clone the following GitHub repository:
-
-    git clone --recurse-submodule https://github.com/HarunTeper/artery-ros2
-
-Then, follow the installation guide here:
-
-    http://artery.v2x-research.eu/install/
-
-Before building artery, move to the AuNa folder and run the following commands:
-
-    source /opt/ros/galactic/setup.bash
-    colcon build --symlink-install
-    source install/setup.bash
-
-In the same terminal, build the artery-ros2 directory as follows:
-
-    mkdir build
-    cd build
-    cmake ..
-    cmake --build .
 
 ### File stucture:
 ```
