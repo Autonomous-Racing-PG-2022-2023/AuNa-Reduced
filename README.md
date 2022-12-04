@@ -14,22 +14,22 @@ The following steps explain the required installation steps to run the framework
 
 First, install the following packages and tools as described here:
 
-    https://docs.ros.org/en/foxy/Installation/Ubuntu-Install-Debians.html
+    https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html
     http://gazebosim.org/tutorials?tut=install_ubuntu&cat=install
     
 Then, additionally install the following packages:
     
     sudo apt install python3-pip
     sudo apt install python3-colcon-common-extensions
-    sudo apt install ros-foxy-xacro
-    sudo apt install ros-foxy-rmw-cyclonedds-cpp
-    sudo apt install ros-foxy-gazebo-ros-pkgs
-    sudo apt install ros-foxy-navigation2 ros-foxy-nav2-bringup ros-foxy-turtlebot3 ros-foxy-turtlebot3-*
+    sudo apt install ros-galactic-xacro
+    sudo apt install ros-galactic-rmw-cyclonedds-cpp
+    sudo apt install ros-galactic-gazebo-ros-pkgs
+    sudo apt install ros-galactic-navigation2 ros-galactic-nav2-bringup ros-galactic-turtlebot3 ros-galactic-turtlebot3-*
     pip install ruamel.yaml
 
 After that, build the package:
 
-    source /opt/ros/foxy/setup.bash
+    source /opt/ros/galactic/setup.bash
     colcon build --symlink-install
         
 Run the following commands in the terminal before using ROS2:
@@ -41,7 +41,7 @@ Run the following commands in the terminal before using ROS2:
     export TURTLEBOT3_MODEL=waffle
     export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:/opt/ros/foxy/share/turtlebot3_gazebo/models
     
-    source /opt/ros/foxy/setup.bash
+    source /opt/ros/galactic/setup.bash
     source ~/AuNa/install/setup.bash
     
 ### MATLAB and Simulink
@@ -89,7 +89,7 @@ Then, follow the installation guide here:
 
 Before building artery, move to the AuNa folder and run the following commands:
 
-    source /opt/ros/foxy/setup.bash
+    source /opt/ros/galactic/setup.bash
     colcon build --symlink-install
     source install/setup.bash
 
