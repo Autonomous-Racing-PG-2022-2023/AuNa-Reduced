@@ -94,27 +94,6 @@ Each launch file includes several parameters that can be adjusted. For example, 
 
     ros2 launch car_simulator scenario_multi_robot_racetrack.launch.py robot_number:=3
     
-## MATLAB and Simulink
-
-In general, it is possible to integrate any MATLAB and Simulink script via the ROS2 publisher and subscriber functionalities.
-
-An example is shown by the platooning controller, which can be found in *src/car_simulator/matlab/CACC*. It receives the current state of the direct leading vehicle and outputs the corresponding velocity and steering angle, so that a stable inter-vehicle distance is maintained.
-
-## OMNeT++ and Artery
-
-The wireless communication between robots is implemented via Artery, which implements the ETSI-ITS-G5 communication architecture. It is possible to add application-specific services to Artery in order to implement custom functionalities for communication.
-
-For example, the platooning service is currently implemented in the ros2-platooning scenario in Artery. It detects whether or not a message originates from the direct leading vehicle and forwards these received messages to the platooning controller.
-
-The scenario can be launched by running the following command
-
-    cmake --build build --target run_ros2_platooning
-
-In general, it is possible to add arbitrary services to Artery to evaluate other message formats or scenarios.
-
-
-![](https://github.com/HarunTeper/AuNa/blob/main/media/omnetSimulation.gif)
-
 ## Acknowledgements
 
 We would like to thank all the authors who helped to extend the framework. In particular, we would like to thank Anggera Bayuwindra, Enio Prates Vasconcelos Filho, Raphael Riebl, and Ricardo Severino for providing their components and implementation details for the integration.
