@@ -31,6 +31,7 @@ def generate_launch_description():
     # Paths to folders and files
     gazebo_launch_file_dir = os.path.join(pkg_dir, 'launch', 'gazebo')
     spawn_launch_file_dir = os.path.join(pkg_dir, 'launch', 'spawn')
+    autowarelaunch_file_dir = os.path.join(pkg_dir, 'launch', 'autoware')
 
     # Launch Argument Configurations
     world_name = LaunchConfiguration('world_name', default='racetrack_decorated')
@@ -55,6 +56,11 @@ def generate_launch_description():
             'world_name': world_name
         }.items(),
     )
+    controller_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(autowarelaunch_file_dir, 'joy_controller.launch.py')),
+        launch_arguments={
+        }.items(),
+    )
     
     # Launch Description
     ld = LaunchDescription()
@@ -63,5 +69,6 @@ def generate_launch_description():
 
     ld.add_action(world_cmd)
     ld.add_action(spawn_cmd)
+    ld.add_action(controller_cmd)
 
     return ld
