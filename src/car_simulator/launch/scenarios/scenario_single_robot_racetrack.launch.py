@@ -69,6 +69,6 @@ def generate_launch_description():
 
     ld.add_action(world_cmd)
     ld.add_action(spawn_cmd)
-    #ld.add_action(controller_cmd)
+    ld.add_action(controller_cmd)
 
     return ld
