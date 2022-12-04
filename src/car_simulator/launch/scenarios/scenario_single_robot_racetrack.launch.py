@@ -30,7 +30,6 @@ def generate_launch_description():
 
     # Paths to folders and files
     gazebo_launch_file_dir = os.path.join(pkg_dir, 'launch', 'gazebo')
-    nav_launch_file_dir = os.path.join(pkg_dir, 'launch', 'navigation')
     spawn_launch_file_dir = os.path.join(pkg_dir, 'launch', 'spawn')
 
     # Launch Argument Configurations
@@ -56,12 +55,6 @@ def generate_launch_description():
             'world_name': world_name
         }.items(),
     )
-    nav_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(nav_launch_file_dir, 'navigation_single_robot.launch.py')),
-        launch_arguments={
-            'world_name': world_name
-        }.items(),
-    )
     
     # Launch Description
     ld = LaunchDescription()
@@ -70,6 +63,5 @@ def generate_launch_description():
 
     ld.add_action(world_cmd)
     ld.add_action(spawn_cmd)
-    ld.add_action(nav_cmd)
 
     return ld

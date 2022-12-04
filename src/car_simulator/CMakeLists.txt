@@ -38,22 +38,10 @@ ament_target_dependencies(simulation_pose rclcpp std_msgs geometry_msgs nav_msgs
 add_executable(globalTF src/transformations/global_tf.cpp)
 ament_target_dependencies(globalTF rclcpp std_msgs gazebo_msgs geometry_msgs tf2_ros tf2_kdl)
 
-add_executable(arteryInfo src/omnet/artery_info.cpp)
-ament_target_dependencies(arteryInfo rclcpp std_msgs gazebo_msgs ros_its_msgs)
-
-add_executable(omnetTX src/omnet/omnetTX.cpp)
-ament_target_dependencies(omnetTX rclcpp std_msgs geometry_msgs nav_msgs etsi_its_msgs ros_its_msgs)
-
-add_executable(omnetRX src/omnet/omnetRX.cpp)
-ament_target_dependencies(omnetRX rclcpp std_msgs etsi_its_msgs ros_its_msgs)
-
 install(TARGETS
   localization_pose
   simulation_pose
-  arteryInfo
   globalTF
-  omnetTX
-  omnetRX
   DESTINATION lib/${PROJECT_NAME}
 )
 
