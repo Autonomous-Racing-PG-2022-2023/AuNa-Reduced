@@ -14,22 +14,22 @@ The following steps explain the required installation steps to run the framework
 
 First, install the following packages and tools as described here:
 
-    https://docs.ros.org/en/foxy/Installation/Ubuntu-Install-Debians.html
+    https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html
     http://gazebosim.org/tutorials?tut=install_ubuntu&cat=install
     
 Then, additionally install the following packages:
     
     sudo apt install python3-pip
     sudo apt install python3-colcon-common-extensions
-    sudo apt install ros-foxy-xacro
-    sudo apt install ros-foxy-rmw-cyclonedds-cpp
-    sudo apt install ros-foxy-gazebo-ros-pkgs
-    sudo apt install ros-foxy-navigation2 ros-foxy-nav2-bringup ros-foxy-turtlebot3 ros-foxy-turtlebot3-*
+    sudo apt install ros-galactic-xacro
+    sudo apt install ros-galactic-rmw-cyclonedds-cpp
+    sudo apt install ros-galactic-gazebo-ros-pkgs
+    sudo apt install ros-galactic-navigation2 ros-galactic-nav2-bringup ros-galactic-turtlebot3 ros-galactic-turtlebot3-*
     pip install ruamel.yaml
 
 After that, build the package:
 
-    source /opt/ros/foxy/setup.bash
+    source /opt/ros/galactic/setup.bash
     colcon build --symlink-install
         
 Run the following commands in the terminal before using ROS2:
@@ -39,66 +39,10 @@ Run the following commands in the terminal before using ROS2:
     
     export GAZEBO_MODEL_DATABASE_URI=http://models.gazebosim.org/
     export TURTLEBOT3_MODEL=waffle
-    export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:/opt/ros/foxy/share/turtlebot3_gazebo/models
+    export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:/opt/ros/galactic/share/turtlebot3_gazebo/models
     
-    source /opt/ros/foxy/setup.bash
+    source /opt/ros/galactic/setup.bash
     source ~/AuNa/install/setup.bash
-    
-### MATLAB and Simulink
-
-First, install MATLAB and Simulink as described here:
-
-    https://de.mathworks.com/help/install/
-    https://de.mathworks.com/products/matlab.html
-    https://de.mathworks.com/products/simulink.html
-
-Install Python3.9:
-
-    sudo add-apt-repository ppa:deadsnakes/ppa
-    sudo apt-get update
-    sudo apt install python3.9 python3.9-venv libpython3.9
-    
-Create symlinks to the Python3.9 installation:
-
-    sudo ln -s /usr/lib/x86_64-linux-gnu/libpython3.9.so.1 /usr/lib/libpython3.9.so.1
-    sudo ln -s /usr/lib/x86_64-linux-gnu/libpython3.9.so.1.0 /usr/lib/libpython3.9.so.1.0
-    
-Install numpy:
-
-    sudo apt-get install python-numpy
-    
-In every MATLAB script, you need to add the following line at the beginning:
-    
-    pyenv('Version','/usr/bin/python3.9');
-    
-After that, ROS2 and MATLAB/Simulink are connected.
-
-### OMNeT++ and Artery
-
-Please install OMNeT++ 5.x as described here:
-
-    https://omnetpp.org/
-
-After that, install the Artery framework. Clone the following GitHub repository:
-
-    git clone --recurse-submodule https://github.com/HarunTeper/artery-ros2
-
-Then, follow the installation guide here:
-
-    http://artery.v2x-research.eu/install/
-
-Before building artery, move to the AuNa folder and run the following commands:
-
-    source /opt/ros/foxy/setup.bash
-    colcon build --symlink-install
-    source install/setup.bash
-
-In the same terminal, build the artery-ros2 directory as follows:
-
-    mkdir build
-    cd build
-    cmake ..
-    cmake --build .
 
 ### File stucture:
 ```
@@ -150,27 +94,6 @@ Each launch file includes several parameters that can be adjusted. For example, 
 
     ros2 launch car_simulator scenario_multi_robot_racetrack.launch.py robot_number:=3
     
-## MATLAB and Simulink
-
-In general, it is possible to integrate any MATLAB and Simulink script via the ROS2 publisher and subscriber functionalities.
-
-An example is shown by the platooning controller, which can be found in *src/car_simulator/matlab/CACC*. It receives the current state of the direct leading vehicle and outputs the corresponding velocity and steering angle, so that a stable inter-vehicle distance is maintained.
-
-## OMNeT++ and Artery
-
-The wireless communication between robots is implemented via Artery, which implements the ETSI-ITS-G5 communication architecture. It is possible to add application-specific services to Artery in order to implement custom functionalities for communication.
-
-For example, the platooning service is currently implemented in the ros2-platooning scenario in Artery. It detects whether or not a message originates from the direct leading vehicle and forwards these received messages to the platooning controller.
-
-The scenario can be launched by running the following command
-
-    cmake --build build --target run_ros2_platooning
-
-In general, it is possible to add arbitrary services to Artery to evaluate other message formats or scenarios.
-
-
-![](https://github.com/HarunTeper/AuNa/blob/main/media/omnetSimulation.gif)
-
 ## Acknowledgements
 
 We would like to thank all the authors who helped to extend the framework. In particular, we would like to thank Anggera Bayuwindra, Enio Prates Vasconcelos Filho, Raphael Riebl, and Ricardo Severino for providing their components and implementation details for the integration.
