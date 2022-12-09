@@ -42,7 +42,7 @@ Run the following commands in the terminal before using ROS2:
     export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:/opt/ros/galactic/share/turtlebot3_gazebo/models
     
     source /opt/ros/galactic/setup.bash
-    source ~/AuNa/install/setup.bash
+    source ~/AuNa-Reduced/install/setup.bash
 
 ### File stucture:
 ```
@@ -88,11 +88,7 @@ ___
 
 After building the package, the currently implemented scenarios can be found in */src/car_simulator/launch/scenarios*. The multi-robot navigation scenario can be launched as follows:
 
-    ros2 launch car_simulator scenario_multi_robot_racetrack.launch.py
-
-Each launch file includes several parameters that can be adjusted. For example, the number of robots can be adjusted:
-
-    ros2 launch car_simulator scenario_multi_robot_racetrack.launch.py robot_number:=3
+    ros2 launch car_simulator scenario_single_robot_racetrack.launch.py
     
 ## Acknowledgements
 
