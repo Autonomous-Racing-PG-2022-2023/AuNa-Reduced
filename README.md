@@ -90,6 +90,10 @@ After building the package, the currently implemented scenarios can be found in 
 
     ros2 launch car_simulator scenario_single_robot_racetrack.launch.py
     
+Make the car drive using:
+    
+    ros2 topic pub --once /robot/cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.0, y: 0.0, z: 0.1}, angular: {x: 0.0, y: 0.0, z: 0.0}}"
+    
 ## Acknowledgements
 
 We would like to thank all the authors who helped to extend the framework. In particular, we would like to thank Anggera Bayuwindra, Enio Prates Vasconcelos Filho, Raphael Riebl, and Ricardo Severino for providing their components and implementation details for the integration.
