@@ -27,6 +27,16 @@ find_package(gazebo_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_kdl REQUIRED)
 
+find_package(autoware_auto_control_msgs REQUIRED)
+find_package(autoware_auto_vehicle_msgs REQUIRED)
+find_package(message_filters REQUIRED)
+find_package(pacmod3_msgs REQUIRED)
+find_package(tier4_api_utils REQUIRED)
+find_package(vehicle_info_util REQUIRED)
+find_package(tier4_api_msgs REQUIRED)
+find_package(tier4_external_api_msgs REQUIRED)
+find_package(tier4_vehicle_msgs REQUIRED)
+
 
 add_executable(localization_pose src/transformations/localization_pose.cpp)
 ament_target_dependencies(localization_pose rclcpp std_msgs geometry_msgs nav_msgs tf2_ros tf2_kdl)
@@ -37,10 +47,14 @@ ament_target_dependencies(simulation_pose rclcpp std_msgs geometry_msgs nav_msgs
 add_executable(globalTF src/transformations/global_tf.cpp)
 ament_target_dependencies(globalTF rclcpp std_msgs gazebo_msgs geometry_msgs tf2_ros tf2_kdl)
 
+add_executable(vehicle_interface src/autoware/vehicle_interface/vehicle_interface.cpp src/autoware/vehicle_interface/vehicle_interface_node.cpp)
+ament_target_dependencies(vehicle_interface rclcpp std_msgs gazebo_msgs geometry_msgs autoware_auto_control_msgs autoware_auto_vehicle_msgs message_filters pacmod3_msgs tier4_api_utils vehicle_info_util tier4_api_msgs tier4_external_api_msgs tier4_vehicle_msgs)
+
 install(TARGETS
   localization_pose
   simulation_pose
   globalTF
+  vehicle_interface
   DESTINATION lib/${PROJECT_NAME}
 )
 

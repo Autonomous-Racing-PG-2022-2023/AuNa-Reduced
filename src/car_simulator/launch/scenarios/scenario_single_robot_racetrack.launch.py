@@ -81,7 +81,7 @@ def generate_launch_description():
     ld.add_action(world_cmd)
     ld.add_action(spawn_cmd)
     #ld.add_action(controller_cmd)
-    #ld.add_action(vehicle_interface_cmd)
+    ld.add_action(vehicle_interface_cmd)
     ld.add_action(rviz_cmd)
 
     return ld
