@@ -14,7 +14,7 @@ def generate_launch_description():
     nav_launch_file_dir = os.path.join(nav2_bringup_pkg_dir, 'launch')
     default_rviz_config_file = os.path.join(pkg_dir, 'rviz','config.rviz')
     
-    rviz_namespace = LaunchConfiguration('namespace', default='robot')
+    rviz_namespace = LaunchConfiguration('namespace', default='')
     rviz_config = LaunchConfiguration('rviz_config', default = default_rviz_config_file)
     use_namespace = LaunchConfiguration('use_namespace', default='true')
     

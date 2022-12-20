@@ -9,8 +9,13 @@ Panels:
         - /RobotModel1
         - /TF1
         - /LaserScan1
+        - /SteeringAngle1
+        - /ConsoleMeter1
+        - /VelocityHistory1
       Splitter Ratio: 0.5
-    Tree Height: 1042
+    Tree Height: 929
+  - Class: rviz_plugins/ManualController
+    Name: ManualController
 Visualization Manager:
   Class: ""
   Displays:
@@ -206,6 +211,59 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
+    - Class: rviz_plugins/SteeringAngle
+      Enabled: true
+      Left: 85
+      Length: 171
+      Name: SteeringAngle
+      Scale: 3
+      Text Color: 25; 255; 240
+      Top: 85
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /vehicle/status/steering_status
+      Use Fixed Frame: true
+      Value: true
+      Value Scale: 0.14999249577522278
+      Value height offset: 0
+    - Class: rviz_plugins/ConsoleMeter
+      Enabled: true
+      Left: 341
+      Length: 171
+      Name: ConsoleMeter
+      Text Color: 25; 255; 240
+      Top: 85
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /vehicle/status/velocity_status
+      Use Fixed Frame: true
+      Value: true
+      Value Scale: 0.14999249577522278
+      Value height offset: 0
+    - Alpha: 1
+      Class: rviz_plugins/VelocityHistory
+      Color Border Vel Max: 3
+      Constant Color:
+        Color: 0; 0; 0
+        Value: false
+      Use Fixed Frame: true
+      Enabled: true
+      Name: VelocityHistory
+      Scale: 0.30000001192092896
+      Timeout: 10
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /vehicle/status/velocity_status
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -253,6 +311,8 @@ Window Geometry:
   Height: 1271
   Hide Left Dock: false
   Hide Right Dock: false
+  ManualController:
+    collapsed: false
   QMainWindow State: 000000ff00000000fd0000000100000000000001560000049dfc0200000002fb000000100044006900730070006c006100790073010000003d0000049d000000c900fffffffb0000001e005200650061006c00730065006e0073006500430061006d0065007200610000000000ffffffff00000000000000000000085c0000049d00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Width: 2488
   X: 72

@@ -14,7 +14,20 @@ def generate_launch_description():
     config_file = os.path.join(pkg_dir, 'config', 'model_params', 'vehicle_interface.yaml')
 
      # Launch Argument Configurations
-    namespace = LaunchConfiguration('namespace', default='robot')
+    namespace = LaunchConfiguration('namespace', default='')
+    base_frame_id = LaunchConfiguration('base_frame_id', default=[namespace, '/base_link']);
+    
+    # Launch Arguments
+    namespace_arg = DeclareLaunchArgument(
+        name='namespace',
+        default_value='',
+        description='Robot namespace'
+    )
+    base_frame_id_arg = DeclareLaunchArgument(
+        'base_frame_id',
+        default_value=[namespace, '/base_link'],
+        description='base_frame_id is the target_frame for status messages'
+    )
 
     # Nodes and other launch files
     start_vehicle_interface_cmd = Node(
@@ -25,18 +38,21 @@ def generate_launch_description():
         output='screen',
         parameters=[
             config_file,
-            {'base_frame_id': "robot/odom/base_link"}
+            {'base_frame_id': base_frame_id}
         ],
         remappings=[
-            #('/external/selected/control_cmd', '/control/command/control_cmd'),
             ('/control/command/control_cmd', '/external/selected/control_cmd'),
-            ('/api/autoware/set/engage', '/control/command/engage'),
-            ('/external/selected/gear_cmd', '/control/command/gear_cmd')
+            ('/control/command/control_cmd', '/external/selected/control_cmd'),
+            ('base_link', 'robot/base_link')
         ]
     )
+    
 
     # Launch Description
     ld = LaunchDescription()
+    
+    ld.add_action(namespace_arg)
+    ld.add_action(base_frame_id_arg)
 
     ld.add_action(start_vehicle_interface_cmd)
 

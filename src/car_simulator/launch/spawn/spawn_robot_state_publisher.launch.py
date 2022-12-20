@@ -42,8 +42,10 @@ def generate_launch_description():
         description='Use simulation (Gazebo) clock if true'
     )
     
-    remapping_tf = [('/tf', 'tf'),
-                  ('/tf_static', 'tf_static')]
+    remapping = [
+        ('/tf', 'tf'),
+        ('/tf_static', 'tf_static'),
+    ]
 
     # Nodes and other launch files
     robot_state_publisher_node = Node(
@@ -58,7 +60,7 @@ def generate_launch_description():
                 ' namespace:=', urdf_namespace])},
             {'use_sim_time':use_sim_time},
         ],
-        remappings=remapping_tf
+        remappings=remapping
     )
 
     # Launch Description
