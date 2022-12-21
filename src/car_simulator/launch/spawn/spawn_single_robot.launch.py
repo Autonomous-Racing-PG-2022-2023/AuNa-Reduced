@@ -18,7 +18,7 @@ def generate_launch_description():
 
     # Launch Argument Configurations
     name = LaunchConfiguration('name', default='robot')
-    namespace = LaunchConfiguration('namespace', default='robot')
+    namespace = LaunchConfiguration('namespace', default='robot/')
     urdf_namespace = LaunchConfiguration('urdf_namespace', default='robot/')
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
     x_pose = LaunchConfiguration('x_pose', default='0.0')
@@ -33,7 +33,7 @@ def generate_launch_description():
     )
     namespace_arg = DeclareLaunchArgument(
         'namespace',
-        default_value='robot',
+        default_value='robot/',
         description='Robot namespace for ROS nodes and topics'
     )
     urdf_namespace_arg = DeclareLaunchArgument(

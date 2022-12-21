@@ -24,15 +24,13 @@ VehicleInterface::VehicleInterface()
   vehicle_info_(vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo())
 {
 	/* setup parameters */
-	namespace_ = declare_parameter("namespace", "");
 	base_frame_id_ = declare_parameter("base_frame_id", "base_link");
 	
 	RCLCPP_INFO_THROTTLE(
 		get_logger(),
 		*get_clock(),
 		std::chrono::milliseconds(1000).count(),
-		"namespace: %s, base_frame_id: %s, loop_rate: %lf",
-		namespace_.c_str(),
+		"base_frame_id: %s, loop_rate: %lf",
 		base_frame_id_.c_str(),
 		loop_rate_
 	);
@@ -56,7 +54,7 @@ VehicleInterface::VehicleInterface()
 	
 	// To vehicle
 	cmd_vel_pub_ = create_publisher<geometry_msgs::msg::Twist>(
-		(namespace_ + std::string("/cmd_vel")).c_str(),
+		"cmd_vel",
 		rclcpp::QoS{1}
 	);
 

@@ -15,7 +15,7 @@ def generate_launch_description():
 
      # Launch Argument Configurations
     namespace = LaunchConfiguration('namespace', default='')
-    base_frame_id = LaunchConfiguration('base_frame_id', default=[namespace, '/base_link']);
+    base_frame_id = LaunchConfiguration('base_frame_id', default=[namespace, 'base_link']);
     
     # Launch Arguments
     namespace_arg = DeclareLaunchArgument(
@@ -25,7 +25,7 @@ def generate_launch_description():
     )
     base_frame_id_arg = DeclareLaunchArgument(
         'base_frame_id',
-        default_value=[namespace, '/base_link'],
+        default_value=[namespace, 'base_link'],
         description='base_frame_id is the target_frame for status messages'
     )
 
@@ -38,12 +38,10 @@ def generate_launch_description():
         output='screen',
         parameters=[
             config_file,
-            {'base_frame_id': base_frame_id}
-        ],
-        remappings=[
-            ('/control/command/control_cmd', '/external/selected/control_cmd'),
-            ('/control/command/control_cmd', '/external/selected/control_cmd'),
-            ('base_link', 'robot/base_link')
+            {
+                'namespace': namespace,
+                'base_frame_id': base_frame_id
+            }
         ]
     )
     

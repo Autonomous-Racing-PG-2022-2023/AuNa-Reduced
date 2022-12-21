@@ -2,6 +2,7 @@ from launch.substitutions import LaunchConfiguration
 from launch.actions import DeclareLaunchArgument
 from launch_ros.actions import Node
 from launch import LaunchDescription
+from launch.substitutions import PythonExpression
 
 def generate_launch_description():
     # Launch Argument Configurations
@@ -37,6 +38,17 @@ def generate_launch_description():
         default_value='0.0',
         description='Robot spawn z position'
     )
+    
+    #Remove trailing slash
+    gazebo_namespace = PythonExpression(
+        [
+            "'",
+            namespace,
+            "'[0:len('",
+            namespace,
+            "') - 1]"
+        ]
+    )
 
     # Nodes and other launch files
     start_gazebo_ros_spawner_cmd = Node(
@@ -51,9 +63,10 @@ def generate_launch_description():
             '-x', x_pose,
             '-y', y_pose,
             '-z', z_pose,
-            '-robot_namespace', namespace
+            '-robot_namespace', gazebo_namespace 
         ]
     )
+    print(gazebo_namespace);
 
     # Launch Description
     ld = LaunchDescription()

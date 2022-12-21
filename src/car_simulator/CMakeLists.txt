@@ -45,11 +45,15 @@ ament_target_dependencies(globalTF rclcpp std_msgs gazebo_msgs geometry_msgs tf2
 add_executable(vehicle_interface src/autoware/vehicle_interface/vehicle_interface.cpp src/autoware/vehicle_interface/vehicle_interface_node.cpp)
 ament_target_dependencies(vehicle_interface rclcpp std_msgs gazebo_msgs geometry_msgs autoware_auto_control_msgs autoware_auto_vehicle_msgs message_filters vehicle_info_util)
 
+add_executable(frame_remap src/autoware/rviz_transform/frame_remap.cpp)
+ament_target_dependencies(frame_remap rclcpp std_msgs geometry_msgs tf2_ros)
+
 install(TARGETS
   localization_pose
   simulation_pose
   globalTF
   vehicle_interface
+  frame_remap
   DESTINATION lib/${PROJECT_NAME}
 )
 

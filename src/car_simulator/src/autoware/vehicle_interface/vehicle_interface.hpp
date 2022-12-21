@@ -63,7 +63,6 @@ private:
 
 	/* ros param */
 	std::string base_frame_id_;
-	std::string namespace_;
 	double loop_rate_;           // [Hz]
 	double tire_radius_;         // [m]
 	double wheel_base_;          // [m]
