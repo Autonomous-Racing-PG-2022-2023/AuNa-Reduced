@@ -57,11 +57,6 @@ def generate_launch_description():
             'world_name': world_name
         }.items(),
     )
-    controller_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(autowarelaunch_file_dir, 'joy_controller.launch.py')),
-        launch_arguments={
-        }.items(),
-    )
     vehicle_interface_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(autowarelaunch_file_dir, 'vehicle_interface.launch.py')),
         launch_arguments={
@@ -80,7 +75,6 @@ def generate_launch_description():
 
     ld.add_action(world_cmd)
     ld.add_action(spawn_cmd)
-    #ld.add_action(controller_cmd)
     ld.add_action(vehicle_interface_cmd)
     ld.add_action(rviz_cmd)
 

@@ -16,6 +16,7 @@ def generate_launch_description():
      # Launch Argument Configurations
     namespace = LaunchConfiguration('namespace', default='')
     base_frame_id = LaunchConfiguration('base_frame_id', default=[namespace, 'base_link']);
+    steering_frame_id = LaunchConfiguration('steering_frame_id', default=[namespace, 'left_steering']);
     
     # Launch Arguments
     namespace_arg = DeclareLaunchArgument(
@@ -26,7 +27,12 @@ def generate_launch_description():
     base_frame_id_arg = DeclareLaunchArgument(
         'base_frame_id',
         default_value=[namespace, 'base_link'],
-        description='base_frame_id is the target_frame for status messages'
+        description='base_frame of the robot'
+    )
+    steering_frame_id_arg = DeclareLaunchArgument(
+        'steering_frame_id',
+        default_value=[namespace, 'left_steering'],
+        description='steering_frame of the robot'
     )
 
     # Nodes and other launch files
@@ -40,7 +46,8 @@ def generate_launch_description():
             config_file,
             {
                 'namespace': namespace,
-                'base_frame_id': base_frame_id
+                'base_frame_id': base_frame_id,
+                'steering_frame_id': steering_frame_id
             }
         ]
     )
@@ -51,6 +58,7 @@ def generate_launch_description():
     
     ld.add_action(namespace_arg)
     ld.add_action(base_frame_id_arg)
+    ld.add_action(steering_frame_id_arg)
 
     ld.add_action(start_vehicle_interface_cmd)
 

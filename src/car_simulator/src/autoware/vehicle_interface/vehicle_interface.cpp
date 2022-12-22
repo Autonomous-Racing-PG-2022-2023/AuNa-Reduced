@@ -19,12 +19,15 @@
 #include <memory>
 #include <utility>
 
+//odom => Speed with covariance; Also pose if necessary
+
 VehicleInterface::VehicleInterface()
 : Node("vehicle_interface"),
   vehicle_info_(vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo())
 {
 	/* setup parameters */
 	base_frame_id_ = declare_parameter("base_frame_id", "base_link");
+	steering_frame_id_ = declare_parameter("steering_frame_id", "left_steering");
 	
 	RCLCPP_INFO_THROTTLE(
 		get_logger(),
@@ -49,6 +52,19 @@ VehicleInterface::VehicleInterface()
 		rclcpp::QoS{1},
 		std::bind(&VehicleInterface::callbackControlCmd, this, _1)
 	);
+	
+	//From vehicle
+	odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
+		"odom",
+		rclcpp::QoS{1},
+		std::bind(&VehicleInterface::callbackOdom, this, _1)
+	);
+	
+	tf_sub_ = create_subscription<tf2_msgs::msg::TFMessage>(
+		"tf",
+		rclcpp::QoS{1},
+		std::bind(&VehicleInterface::callbackTf, this, _1)
+	);
 
 	/* publisher */
 	
@@ -71,7 +87,8 @@ VehicleInterface::VehicleInterface()
 }
 
 void VehicleInterface::callbackControlCmd(
-  const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr msg)
+	const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr msg
+)
 {
 	autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr control_cmd_ptr_ = msg;
 
@@ -92,33 +109,58 @@ void VehicleInterface::callbackControlCmd(
 		
 		cmd_vel_pub_->publish(cmd_vel);
 	}
+}
 
-	//TODO: Use measued calues
-	double current_velocity = control_cmd_ptr_->longitudinal.speed;
-	double current_steer = control_cmd_ptr_->lateral.steering_tire_angle;
+void VehicleInterface::callbackOdom(
+	const nav_msgs::msg::Odometry::ConstSharedPtr msg
+)
+{
+	nav_msgs::msg::Odometry::ConstSharedPtr odom_ptr_ = msg;
+	
+	//Only use messages of base_frame for velocity
+	if(odom_ptr_->child_frame_id == base_frame_id_){
+	
+		//To Autoware
 
-	//To Autoware
+		std_msgs::msg::Header header = odom_ptr_->header;
 
-	std_msgs::msg::Header header;
-	header.frame_id = base_frame_id_;
-	header.stamp =  this->now();
-
-	/* publish vehicle status twist */
-	{
-		autoware_auto_vehicle_msgs::msg::VelocityReport twist;
-		twist.header = header;
-		twist.longitudinal_velocity = current_velocity;
-		twist.lateral_velocity = 0.0;
-		twist.heading_rate = 0.0;
-		vehicle_twist_pub_->publish(twist);
+		/* publish vehicle status twist */
+		{
+			//TODO: Use different message with covariance and with angular and linear velocity
+			autoware_auto_vehicle_msgs::msg::VelocityReport twist;
+			twist.header = header;
+			twist.longitudinal_velocity = odom_ptr_->twist.twist.linear.x;
+			twist.lateral_velocity = odom_ptr_->twist.twist.linear.z;
+			twist.heading_rate = odom_ptr_->twist.twist.linear.y;
+			vehicle_twist_pub_->publish(twist);
+		}
 	}
+	
+}
 
-	/* publish current status steering */
-	{
-		autoware_auto_vehicle_msgs::msg::SteeringReport steer_msg;
-		steer_msg.stamp = header.stamp;
-		steer_msg.steering_tire_angle = current_steer;//Desired steering angle
-		steering_status_pub_->publish(steer_msg);
+void VehicleInterface::callbackTf(
+	const tf2_msgs::msg::TFMessage::ConstSharedPtr msg
+)
+{
+	tf2_msgs::msg::TFMessage::ConstSharedPtr tf_ptr_ = msg;
+	
+	for(const geometry_msgs::msg::TransformStamped& current_transform : tf_ptr_->transforms){
+		
+		//Only use messages of steering_frame for steering
+		if(current_transform.child_frame_id == steering_frame_id_){
+
+			/* publish current status steering */
+			{
+				autoware_auto_vehicle_msgs::msg::SteeringReport steer_msg;
+				steer_msg.stamp = current_transform.header.stamp;
+				steer_msg.steering_tire_angle = current_transform.transform.rotation.z * 100.0;//Desired steering angle
+				steering_status_pub_->publish(steer_msg);
+			}
+			break;
+		}
 	}
+	
+	
+	
 }
 

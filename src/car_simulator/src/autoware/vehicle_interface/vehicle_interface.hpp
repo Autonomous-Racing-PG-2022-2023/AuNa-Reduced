@@ -26,8 +26,13 @@
 #include "autoware_auto_vehicle_msgs/msg/velocity_report.hpp"
 #include "autoware_auto_vehicle_msgs/srv/control_mode_command.hpp"
 
+#include "geometry_msgs/msg/transform_stamped.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "geometry_msgs/msg/vector3.hpp"
+
+#include "nav_msgs/msg/odometry.hpp"
+
+#include "tf2_msgs/msg/tf_message.hpp"
 
 #include "message_filters/subscriber.h"
 #include "message_filters/sync_policies/approximate_time.h"
@@ -49,6 +54,8 @@ private:
 	/* subscribers */
 	// From Autoware
 	rclcpp::Subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr control_cmd_sub_;
+	rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
+	rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr tf_sub_;
 
 	/* publishers */
 
@@ -63,6 +70,7 @@ private:
 
 	/* ros param */
 	std::string base_frame_id_;
+	std::string steering_frame_id_;
 	double loop_rate_;           // [Hz]
 	double tire_radius_;         // [m]
 	double wheel_base_;          // [m]
@@ -71,6 +79,8 @@ private:
 
 	/* callbacks */
 	void callbackControlCmd(const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr msg);
+	void callbackOdom( const nav_msgs::msg::Odometry::ConstSharedPtr msg);
+	void callbackTf(const tf2_msgs::msg::TFMessage::ConstSharedPtr msg);
 
 	/*  functions */
 	void publishCommands();
