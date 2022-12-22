@@ -1,8 +1,9 @@
 import os
 from ament_index_python.packages import get_package_share_directory
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction, GroupAction
 from launch_ros.actions import Node, SetRemap
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch import LaunchDescription
 
@@ -33,7 +34,6 @@ def generate_launch_description():
             )
         ]
     )
-    
     frame_remap_cmd = Node(
         package='car_simulator',
         executable='frame_remap',
@@ -45,7 +45,19 @@ def generate_launch_description():
                 'src': namespace,
                 'dst': ''
             }
-        ]
+        ],
+        remappings=[
+            ('/tf', 'tf')
+        ],
+        condition=IfCondition(
+            PythonExpression(
+                [
+                    "len('",
+                    namespace,
+                    "') != 0"
+                ]
+            )
+        )
     )
 
     # Launch Description
