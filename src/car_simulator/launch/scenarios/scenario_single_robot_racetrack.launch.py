@@ -68,6 +68,12 @@ def generate_launch_description():
         }.items(),
     )
     
+    control_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(autowarelaunch_file_dir, 'control.launch.py')),
+        launch_arguments={
+        }.items(),
+    )
+    
     # Launch Description
     ld = LaunchDescription()
 
@@ -76,6 +82,7 @@ def generate_launch_description():
     ld.add_action(world_cmd)
     ld.add_action(spawn_cmd)
     ld.add_action(vehicle_interface_cmd)
+    ld.add_action(control_cmd)
     ld.add_action(rviz_cmd)
 
     return ld

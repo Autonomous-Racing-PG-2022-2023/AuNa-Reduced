@@ -13,7 +13,7 @@ def generate_launch_description():
     # Paths to folders and files
     config_file = os.path.join(pkg_dir, 'config', 'model_params', 'vehicle_interface.yaml')
 
-     # Launch Argument Configurations
+    # Launch Argument Configurations
     namespace = LaunchConfiguration('namespace', default='')
     base_frame_id = LaunchConfiguration('base_frame_id', default=[namespace, 'base_link']);
     steering_frame_id = LaunchConfiguration('steering_frame_id', default=[namespace, 'left_steering']);
