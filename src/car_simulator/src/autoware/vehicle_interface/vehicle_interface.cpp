@@ -48,14 +48,14 @@ VehicleInterface::VehicleInterface()
 
 	// From autoware
 	control_cmd_sub_ = create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
-		"/control/command/control_cmd",
+		"~/control/command/control_cmd",
 		rclcpp::QoS{1},
 		std::bind(&VehicleInterface::callbackControlCmd, this, _1)
 	);
 	
 	//From vehicle
 	odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
-		"odom",
+		"~/odom",
 		rclcpp::QoS{1},
 		std::bind(&VehicleInterface::callbackOdom, this, _1)
 	);
@@ -65,22 +65,23 @@ VehicleInterface::VehicleInterface()
 		rclcpp::QoS{1},
 		std::bind(&VehicleInterface::callbackTf, this, _1)
 	);
+	//TODO:Maybe use filter
 
 	/* publisher */
 	
 	// To vehicle
 	cmd_vel_pub_ = create_publisher<geometry_msgs::msg::Twist>(
-		"cmd_vel",
+		"~/cmd_vel",
 		rclcpp::QoS{1}
 	);
 
 	// To Autoware
 	vehicle_twist_pub_ = create_publisher<autoware_auto_vehicle_msgs::msg::VelocityReport>(
-		"/vehicle/status/velocity_status",
+		"~/vehicle/status/velocity_status",
 		rclcpp::QoS{1}
 	);
 	steering_status_pub_ = create_publisher<autoware_auto_vehicle_msgs::msg::SteeringReport>(
-		"/vehicle/status/steering_status",
+		"~/vehicle/status/steering_status",
 		rclcpp::QoS{1}
 	);
 	

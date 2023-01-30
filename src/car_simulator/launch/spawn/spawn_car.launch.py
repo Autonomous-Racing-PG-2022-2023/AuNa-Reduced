@@ -66,7 +66,6 @@ def generate_launch_description():
             '-robot_namespace', gazebo_namespace 
         ]
     )
-    print(gazebo_namespace);
 
     # Launch Description
     ld = LaunchDescription()

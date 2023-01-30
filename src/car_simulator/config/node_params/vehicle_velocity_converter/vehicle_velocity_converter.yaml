@@ -1,0 +1,5 @@
+/**:
+  ros__parameters:
+    speed_scale_factor: 1.0
+    velocity_stddev_xx: 0.0
+    angular_velocity_stddev_zz: 0.0

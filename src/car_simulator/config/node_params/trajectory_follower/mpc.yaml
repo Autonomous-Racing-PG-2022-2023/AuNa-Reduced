@@ -1,0 +1,56 @@
+/**:
+  ros__parameters:
+    enable_path_smoothing: false
+    path_filter_moving_ave_num: 20
+    curvature_smoothing_num_traj: 20
+    curvature_smoothing_num_ref_steer: 20
+    traj_resample_dist: 0.1
+    admissible_position_error: 0.1
+    admissible_yaw_error_rad: 0.1
+    use_steer_prediction: false
+    vehicle_model_steer_tau: 0.1
+    stop_state_entry_ego_speed: 0.1
+    stop_state_entry_target_speed: 0.1
+    converged_steer_rad: 0.1
+    keep_steer_control_until_converged: false
+    new_traj_duration_time: 0.1
+    new_traj_end_dist: 0-1
+    steer_rate_lim_dps: 0.1
+    vehicle_model_type: 'dynamics'
+    vehicle:
+      mass_fl: 10.0
+      mass_fr: 10.0
+      mass_rl: 10.0
+      mass_rr: 10.0
+      cf: 0.1
+      cr: 0.1
+    qp_solver_type: 'unconstraint_fast'
+    input_delay: 0.1
+    steering_lpf_cutoff_hz: 0.1
+    error_deriv_lpf_cutoff_hz: 0.1
+    
+    mpc_prediction_horizon: 0.1
+    mpc_prediction_dt: 0.1
+    mpc_weight_lat_error: 0.1
+    mpc_weight_heading_error: 0.1
+    mpc_weight_heading_error_squared_vel: 0.1
+    mpc_weight_steering_input: 0.1
+    mpc_weight_steering_input_squared_vel: 0.1
+    mpc_weight_lat_jerk: 0.1
+    mpc_weight_steer_rate: 0.1
+    mpc_weight_steer_acc: 0.1
+    mpc_low_curvature_weight_lat_error: 0.1
+    mpc_low_curvature_weight_heading_error: 0.1
+    mpc_low_curvature_weight_heading_error_squared_vel: 0.1
+    mpc_low_curvature_weight_steering_input: 0.1
+    mpc_low_curvature_weight_steering_input_squared_vel: 0.1
+    mpc_low_curvature_weight_lat_jerk: 0.1
+    mpc_low_curvature_weight_steer_rate: 0.1
+    mpc_low_curvature_weight_steer_acc: 0.1
+    mpc_low_curvature_thresh_curvature: 0.1
+    mpc_weight_terminal_lat_error: 0.1
+    mpc_weight_terminal_heading_error: 0.1
+    mpc_zero_ff_steer_deg: 0.1
+    mpc_acceleration_limit: 0.1
+    mpc_velocity_time_constant: 0.1
+    mpc_min_prediction_length: 0.1

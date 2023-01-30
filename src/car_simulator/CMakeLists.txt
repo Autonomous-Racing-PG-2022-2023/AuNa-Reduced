@@ -26,11 +26,19 @@ find_package(gazebo_msgs REQUIRED)
 
 find_package(tf2_ros REQUIRED)
 find_package(tf2_kdl REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+
+find_package(laser_geometry REQUIRED)
 
 find_package(autoware_auto_control_msgs REQUIRED)
 find_package(autoware_auto_vehicle_msgs REQUIRED)
-find_package(message_filters REQUIRED)
+find_package(tier4_autoware_utils REQUIRED)
+find_package(autoware_ad_api_specs REQUIRED)
+find_package(component_interface_utils REQUIRED)
+
 find_package(vehicle_info_util REQUIRED)
+
+find_package(message_filters REQUIRED)
 
 
 add_executable(localization_pose src/transformations/localization_pose.cpp)
@@ -45,15 +53,24 @@ ament_target_dependencies(globalTF rclcpp std_msgs gazebo_msgs geometry_msgs tf2
 add_executable(vehicle_interface src/autoware/vehicle_interface/vehicle_interface.cpp src/autoware/vehicle_interface/vehicle_interface_node.cpp)
 ament_target_dependencies(vehicle_interface rclcpp std_msgs gazebo_msgs nav_msgs tf2_ros geometry_msgs autoware_auto_control_msgs autoware_auto_vehicle_msgs message_filters vehicle_info_util)
 
-add_executable(frame_remap src/autoware/rviz_transform/frame_remap.cpp)
-ament_target_dependencies(frame_remap rclcpp std_msgs geometry_msgs tf2_ros)
+add_executable(tf_remap src/transformations/tf_remap.cpp)
+ament_target_dependencies(tf_remap rclcpp std_msgs geometry_msgs tf2_ros)
+
+add_executable(laser_to_pointcloud src/laser_to_pointcloud/laser_to_pointcloud.cpp)
+ament_target_dependencies(laser_to_pointcloud rclcpp std_msgs sensor_msgs geometry_msgs tf2_ros laser_geometry)
+
+add_executable(default_pose_initializer src/autoware/ad_api/default_pose_initializer.cpp)
+target_compile_options(default_pose_initializer PRIVATE -DROS_DISTRO_GALACTIC)
+ament_target_dependencies(default_pose_initializer rclcpp std_msgs geometry_msgs tf2_geometry_msgs tier4_autoware_utils autoware_ad_api_specs component_interface_utils)
 
 install(TARGETS
   localization_pose
   simulation_pose
   globalTF
   vehicle_interface
-  frame_remap
+  tf_remap
+  laser_to_pointcloud
+  default_pose_initializer
   DESTINATION lib/${PROJECT_NAME}
 )
 

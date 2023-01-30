@@ -1,8 +1,8 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch.substitutions import LaunchConfiguration
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
-from launch_ros.actions import Node
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction, GroupAction
+from launch_ros.actions import Node, SetRemap
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch import LaunchDescription
 
@@ -34,21 +34,34 @@ def generate_launch_description():
         default_value=[namespace, 'left_steering'],
         description='steering_frame of the robot'
     )
-
+    
     # Nodes and other launch files
-    start_vehicle_interface_cmd = Node(
-        package='car_simulator',
-        executable='vehicle_interface',
-        name='vehicle_interface',
-        namespace = namespace,
-        output='screen',
-        parameters=[
-            config_file,
-            {
-                'namespace': namespace,
-                'base_frame_id': base_frame_id,
-                'steering_frame_id': steering_frame_id
-            }
+    remap_tf = SetRemap(src='/tf', dst='autoware/tf');
+    remap_tf_static = SetRemap(src='/tf_static', dst='autoware/tf_static');
+
+    start_vehicle_interface_cmd = GroupAction(
+        actions = [
+            remap_tf,
+            remap_tf_static,
+            SetRemap(src='~/control/command/control_cmd', dst='control/command/control_cmd'),
+            SetRemap(src='~/odom', dst='odom'),
+            SetRemap(src='~/cmd_vel', dst='cmd_vel'),
+            SetRemap(src='~/vehicle/status/velocity_status', dst='vehicle/status/velocity_status'),
+            SetRemap(src='~/vehicle/status/steering_status', dst='vehicle/status/steering_status'),
+            Node(
+                package='car_simulator',
+                executable='vehicle_interface',
+                name='vehicle_interface',
+                namespace = namespace,
+                output='screen',
+                parameters=[
+                    config_file,
+                    {
+                        'base_frame_id': base_frame_id,
+                        'steering_frame_id': steering_frame_id
+                    }
+                ]
+            )
         ]
     )
     

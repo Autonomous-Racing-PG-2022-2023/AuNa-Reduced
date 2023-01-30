@@ -31,7 +31,10 @@ def generate_launch_description():
     # Paths to folders and files
     gazebo_launch_file_dir = os.path.join(pkg_dir, 'launch', 'gazebo')
     spawn_launch_file_dir = os.path.join(pkg_dir, 'launch', 'spawn')
+    tf_remap_file_dir = os.path.join(pkg_dir, 'launch', 'tf_remap')
+    sensing_launch_file_dir = os.path.join(pkg_dir, 'launch', 'sensing')
     autowarelaunch_file_dir = os.path.join(pkg_dir, 'launch', 'autoware')
+    nav2_file_dir = os.path.join(pkg_dir, 'launch', 'nav2')
     rviz_file_dir = os.path.join(pkg_dir, 'launch', 'rviz')
 
     # Launch Argument Configurations
@@ -51,25 +54,71 @@ def generate_launch_description():
             'world_name': world_name
         }.items(),
     )
+    
     spawn_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(spawn_launch_file_dir, 'spawn_single_robot.launch.py')),
         launch_arguments={
             'world_name': world_name
         }.items(),
     )
+    
+    laser_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(sensing_launch_file_dir, 'laser.launch.py')),
+        launch_arguments={
+            'world_name': world_name
+        }.items(),
+    )
+    
+    tf_remap_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(autowarelaunch_file_dir, 'tf_remap.launch.py')),
+        launch_arguments={
+        }.items(),
+    )
+    
     vehicle_interface_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(autowarelaunch_file_dir, 'vehicle_interface.launch.py')),
         launch_arguments={
         }.items(),
     )
+    
     rviz_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(rviz_file_dir, 'rviz.launch.py')),
         launch_arguments={
         }.items(),
     )
     
+    planning_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(autowarelaunch_file_dir, 'planning.launch.py')),
+        launch_arguments={
+        }.items(),
+    )
+    
+    sensing_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(autowarelaunch_file_dir, 'sensing.launch.py')),
+        launch_arguments={
+        }.items(),
+    )
+    
+    localization_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(autowarelaunch_file_dir, 'localization.launch.py')),
+        launch_arguments={
+        }.items(),
+    )
+    
+    nav2_localization_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(nav2_file_dir, 'localization.launch.py')),
+        launch_arguments={
+        }.items(),
+    )
+    
     control_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(autowarelaunch_file_dir, 'control.launch.py')),
+        launch_arguments={
+        }.items(),
+    )
+    
+    system_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(autowarelaunch_file_dir, 'system.launch.py')),
         launch_arguments={
         }.items(),
     )
@@ -81,8 +130,15 @@ def generate_launch_description():
 
     ld.add_action(world_cmd)
     ld.add_action(spawn_cmd)
+    ld.add_action(tf_remap_cmd)
+    ld.add_action(laser_cmd)
     ld.add_action(vehicle_interface_cmd)
+    ld.add_action(planning_cmd)
+    ld.add_action(sensing_cmd)
+    ld.add_action(localization_cmd)
+    ld.add_action(nav2_localization_cmd)
     ld.add_action(control_cmd)
+    ld.add_action(system_cmd)
     ld.add_action(rviz_cmd)
 
     return ld

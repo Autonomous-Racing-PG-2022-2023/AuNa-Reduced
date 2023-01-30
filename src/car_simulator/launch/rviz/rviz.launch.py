@@ -18,12 +18,17 @@ def generate_launch_description():
     namespace = LaunchConfiguration('namespace', default='')
     rviz_config = LaunchConfiguration('rviz_config', default = default_rviz_config_file)
     use_namespace = LaunchConfiguration('use_namespace', default='true')
-        
-    remap_control_cmd = SetRemap(src='/external/selected/control_cmd', dst='/control/command/control_cmd');
+    
+    remap_tf = SetRemap(src='/tf', dst='autoware/tf');
+    remap_tf_static = SetRemap(src='/tf_static', dst='autoware/tf_static');
     
     rviz_launch_cmd = GroupAction(
         actions = [
-            remap_control_cmd,
+            remap_tf,
+            remap_tf_static,
+            SetRemap(src='/external/selected/control_cmd', dst='control/command/control_cmd'),
+            SetRemap(src='/vehicle/status/velocity_status', dst='vehicle/status/velocity_status'),
+            SetRemap(src='/vehicle/status/steering_status', dst='vehicle/status/steering_status'),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(os.path.join(nav_launch_file_dir, 'rviz_launch.py')),
                 launch_arguments={
@@ -34,36 +39,10 @@ def generate_launch_description():
             )
         ]
     )
-    frame_remap_cmd = Node(
-        package='car_simulator',
-        executable='frame_remap',
-        name='frame_remap',
-        namespace = namespace,
-        output='screen',
-        parameters=[
-            {
-                'src': namespace,
-                'dst': ''
-            }
-        ],
-        remappings=[
-            ('/tf', 'tf')
-        ],
-        condition=IfCondition(
-            PythonExpression(
-                [
-                    "len('",
-                    namespace,
-                    "') != 0"
-                ]
-            )
-        )
-    )
 
     # Launch Description
     ld = LaunchDescription()
 
     ld.add_action(rviz_launch_cmd)
-    ld.add_action(frame_remap_cmd)
 
     return ld
