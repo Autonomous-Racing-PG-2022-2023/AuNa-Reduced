@@ -50,6 +50,28 @@ def generate_launch_description():
         ]
     )
     
+    #Provides empty PredictedObjects to make object avoidance planner work
+    objects_provider_cmd = GroupAction(
+        actions = [
+            remap_tf,
+            remap_tf_static,
+             Node(
+                package='car_simulator',
+                executable='objects_provider',
+                name='objects_provider',
+                namespace = namespace,
+                output='screen',
+                parameters=[
+                    {
+                        'frame_id': [namespace, 'base_link'],
+                        'publish_period': 100,
+                        'dst_topic': 'predicted_objects',
+                    }
+                ],
+            )
+        ]
+    )
+    
     #TODO:Add other parameters
     #FIXME:Check correctness of parameters
     start_autoware_obstacle_avoidance_planner_cmd = GroupAction(
@@ -57,8 +79,8 @@ def generate_launch_description():
             remap_tf,
             remap_tf_static,
             SetRemap(src='/localization/kinematic_state', dst='odom'),
-            SetRemap(src='~/input/objects', dst='obstacle_avoidance_planner/input/objects'),
-            SetRemap(src='~/input/path', dst='obstacle_avoidance_planner/input/path'),
+            SetRemap(src='~/input/objects', dst='predicted_objects'),
+            SetRemap(src='~/input/path', dst='autoware_path'),
             SetRemap(src='~/output/path', dst='obstacle_avoidance_planner/output/path'),
             Node(
                 package='obstacle_avoidance_planner',
@@ -107,6 +129,7 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     #ld.add_action(start_autoware_external_velocity_limit_selector_cmd)
+    ld.add_action(objects_provider_cmd)
     ld.add_action(start_autoware_obstacle_avoidance_planner_cmd)
     ld.add_action(start_autoware_motion_velocity_smoother_cmd)
 

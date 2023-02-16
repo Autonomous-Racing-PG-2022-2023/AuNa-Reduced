@@ -7,7 +7,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_msgs/msg/tf_message.hpp"
 
-class TFRemapper : public rclcpp::Node {
+class TFCopyer : public rclcpp::Node {
    private:
 	rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr subscription_;
 	rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr
@@ -18,8 +18,11 @@ class TFRemapper : public rclcpp::Node {
 
 	tf2_msgs::msg::TFMessage net_message_;
 
-	std::string src_;
-	std::string dst_;
+	std::string src_frame_id_;
+	std::string src_child_frame_id_;
+	
+	std::string dst_frame_id_;
+	std::string dst_child_frame_id_;
 
 	std::string src_tf_;
 	std::string dst_tf_;
@@ -32,10 +35,13 @@ class TFRemapper : public rclcpp::Node {
 	bool tf_static_is_identity;
 
    public:
-	TFRemapper()
-		: Node("frame_remap") {
-		src_ = this->declare_parameter("src", "");
-		dst_ = this->declare_parameter("dst", "");
+	TFCopyer()
+		: Node("frame_copy") {
+		src_frame_id_ = this->declare_parameter("src_frame_id", "");
+		src_child_frame_id_ = this->declare_parameter("src_child_frame_id", "");
+		
+		dst_frame_id_ = this->declare_parameter("dst_frame_id", "");
+		dst_child_frame_id_ = this->declare_parameter("dst_child_frame_id", "");
 
 		src_tf_ = this->declare_parameter("src_tf", "tf");
 		dst_tf_ = this->declare_parameter("dst_tf", "tf");
@@ -43,7 +49,7 @@ class TFRemapper : public rclcpp::Node {
 		src_tf_static_ = this->declare_parameter("src_tf_static", "tf_static");
 		dst_tf_static_ = this->declare_parameter("dst_tf_static", "tf_static");
 		
-		frame_id_is_identity = (src_ == dst_);
+		frame_id_is_identity = ((src_frame_id_ == dst_frame_id_) && (src_child_frame_id_ == dst_child_frame_id_));
 		tf_is_identity = (src_tf_ == dst_tf_);
 		tf_static_is_identity = (src_tf_static_ == dst_tf_static_);
 		
@@ -52,7 +58,7 @@ class TFRemapper : public rclcpp::Node {
 				get_logger(),
 				*get_clock(),
 				std::chrono::milliseconds(1000).count(),
-				"Mapping is a identity mapping. Shuting down node..."
+				"Copying frame on itself is a no-op. Shuting down node..."
 			);
 			rclcpp::shutdown();
 		}else{
@@ -70,25 +76,27 @@ class TFRemapper : public rclcpp::Node {
 				get_logger(),
 				*get_clock(),
 				std::chrono::milliseconds(1000).count(),
-				"Mapping frames in %s, %s to %s, %s, from frames %s to %s.",
+				"Copying frames %s -> %s to %s -> %s in %s, %s to %s, %s.",
+				src_frame_id_.c_str(),
+				src_child_frame_id_.c_str(),
+				dst_frame_id_.c_str(),
+				dst_child_frame_id_.c_str(),
 				src_tf_.c_str(),
 				src_tf_static_.c_str(),
 				dst_tf_.c_str(),
-				dst_tf_static_.c_str(),
-				src_.c_str(),
-				dst_.c_str()
+				dst_tf_static_.c_str()
 			);
 
 			subscription_ = this->create_subscription<tf2_msgs::msg::TFMessage>(
 				src_tf_.c_str(),
 				10,
-				std::bind(&TFRemapper::handle_pose<false>, this, std::placeholders::_1)
+				std::bind(&TFCopyer::handle_pose<false>, this, std::placeholders::_1)
 			);
 
 			static_subscription_ = this->create_subscription<tf2_msgs::msg::TFMessage>(
 				src_tf_static_.c_str(),
 				10,
-				std::bind(&TFRemapper::handle_pose<true>, this, std::placeholders::_1)
+				std::bind(&TFCopyer::handle_pose<true>, this, std::placeholders::_1)
 			);
 			// TODO:Maybe use filter
 		}
@@ -114,9 +122,6 @@ class TFRemapper : public rclcpp::Node {
 		this->static_tf_publisher_->publish(net_message_);
 	}
 
-	/*
-   * TODO: If required maybe map src/a->src/b to src/a->dst/a->src/b->dst/b
-   */
 	template<bool is_static>
 	void handle_pose(const std::shared_ptr<tf2_msgs::msg::TFMessage> msg) {
 		for(const geometry_msgs::msg::TransformStamped& current_transform:
@@ -124,45 +129,21 @@ class TFRemapper : public rclcpp::Node {
 			// Only map messages with frames from our namespace
 			// We resend the original message together with a mapping to our new
 			// namespace
-			if(current_transform.header.frame_id.find(src_) != std::string::npos || current_transform.child_frame_id.find(src_) != std::string::npos) {
-				tf2_msgs::msg::TFMessage send_message_static;
+			if(current_transform.header.frame_id == src_frame_id_ && current_transform.child_frame_id == src_child_frame_id_) {
+				tf2_msgs::msg::TFMessage send_message;
 
-				if(current_transform.header.frame_id.find(src_) != std::string::npos) {
-					geometry_msgs::msg::TransformStamped t_link;
-					t_link.header.stamp	   = current_transform.header.stamp;
-					t_link.header.frame_id = current_transform.header.frame_id;
-					t_link.child_frame_id = (dst_ + current_transform.header.frame_id.substr(src_.length()));
+				geometry_msgs::msg::TransformStamped t_link = current_transform;
+				t_link.header.frame_id = dst_frame_id_;
+				t_link.child_frame_id = dst_child_frame_id_;
 
-					send_message_static.transforms.push_back(t_link);
-				}
-
-				if(current_transform.child_frame_id.find(src_) != std::string::npos) {
-					geometry_msgs::msg::TransformStamped t_link;
-					t_link.header.stamp	   = current_transform.header.stamp;
-					t_link.header.frame_id = current_transform.child_frame_id;
-					t_link.child_frame_id = (dst_ + current_transform.child_frame_id.substr(src_.length()));
-
-					send_message_static.transforms.push_back(t_link);
-				}
+				send_message.transforms.push_back(t_link);
 
 				// Send the transformation
 				if(is_static) {
-					//Only publish original transform in another topic to avoid publishing it twice in the same topic
-					if(!tf_static_is_identity){
-						send_message_static.transforms.push_back(current_transform);
-					}
+					this->sendStaticTransform(send_message);
 				} else {
-					//Only publish original transform in another topic to avoid publishing it twice in the same topic
-					if(!tf_is_identity){
-						tf2_msgs::msg::TFMessage send_message;
-						send_message.transforms.push_back(current_transform);
-						this->tf_publisher_->publish(send_message);
-					}
+					this->tf_publisher_->publish(send_message);
 				}
-				this->sendStaticTransform(
-					send_message_static
-				);	// TODO:Maybe first sort out already seen
-					// frames
 			}
 		}
 	}
@@ -170,7 +151,7 @@ class TFRemapper : public rclcpp::Node {
 
 int main(int argc, char* argv[]) {
 	rclcpp::init(argc, argv);
-	rclcpp::spin(std::make_shared<TFRemapper>());
+	rclcpp::spin(std::make_shared<TFCopyer>());
 	rclcpp::shutdown();
 	return 0;
 }

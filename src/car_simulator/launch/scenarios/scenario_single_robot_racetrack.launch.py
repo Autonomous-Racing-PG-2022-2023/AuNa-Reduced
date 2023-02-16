@@ -35,6 +35,7 @@ def generate_launch_description():
     sensing_launch_file_dir = os.path.join(pkg_dir, 'launch', 'sensing')
     autowarelaunch_file_dir = os.path.join(pkg_dir, 'launch', 'autoware')
     nav2_file_dir = os.path.join(pkg_dir, 'launch', 'nav2')
+    lidarslam_file_dir = os.path.join(pkg_dir, 'launch', 'lidarslam')
     rviz_file_dir = os.path.join(pkg_dir, 'launch', 'rviz')
 
     # Launch Argument Configurations
@@ -93,6 +94,12 @@ def generate_launch_description():
         }.items(),
     )
     
+    perception_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(autowarelaunch_file_dir, 'perception.launch.py')),
+        launch_arguments={
+        }.items(),
+    )
+    
     sensing_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(autowarelaunch_file_dir, 'sensing.launch.py')),
         launch_arguments={
@@ -107,6 +114,12 @@ def generate_launch_description():
     
     nav2_localization_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(nav2_file_dir, 'localization.launch.py')),
+        launch_arguments={
+        }.items(),
+    )
+    
+    lidarslam_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(lidarslam_file_dir, 'slam.launch.py')),
         launch_arguments={
         }.items(),
     )
@@ -134,9 +147,11 @@ def generate_launch_description():
     ld.add_action(laser_cmd)
     ld.add_action(vehicle_interface_cmd)
     ld.add_action(planning_cmd)
+    ld.add_action(perception_cmd)
     ld.add_action(sensing_cmd)
     ld.add_action(localization_cmd)
-    ld.add_action(nav2_localization_cmd)
+    #ld.add_action(nav2_localization_cmd)
+    ld.add_action(lidarslam_cmd)
     ld.add_action(control_cmd)
     ld.add_action(system_cmd)
     ld.add_action(rviz_cmd)

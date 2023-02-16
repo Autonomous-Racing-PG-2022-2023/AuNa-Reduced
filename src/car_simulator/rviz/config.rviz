@@ -139,7 +139,7 @@ Visualization Manager:
           Value: true
         left_wheel_front:
           Value: true
-        odom:
+        map:
           Value: true
         right_steering:
           Value: true
@@ -155,7 +155,7 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        odom:
+        map:
           base_link:
             chassis:
               camera:
@@ -267,7 +267,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: odom
+    Fixed Frame: base_link
     Frame Rate: 30
   Name: root
   Tools:

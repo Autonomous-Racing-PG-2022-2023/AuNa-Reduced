@@ -31,6 +31,8 @@ find_package(tf2_geometry_msgs REQUIRED)
 find_package(laser_geometry REQUIRED)
 
 find_package(autoware_auto_control_msgs REQUIRED)
+find_package(autoware_auto_perception_msgs REQUIRED)
+find_package(autoware_auto_planning_msgs REQUIRED)
 find_package(autoware_auto_vehicle_msgs REQUIRED)
 find_package(tier4_autoware_utils REQUIRED)
 find_package(autoware_ad_api_specs REQUIRED)
@@ -53,8 +55,20 @@ ament_target_dependencies(globalTF rclcpp std_msgs gazebo_msgs geometry_msgs tf2
 add_executable(vehicle_interface src/autoware/vehicle_interface/vehicle_interface.cpp src/autoware/vehicle_interface/vehicle_interface_node.cpp)
 ament_target_dependencies(vehicle_interface rclcpp std_msgs gazebo_msgs nav_msgs tf2_ros geometry_msgs autoware_auto_control_msgs autoware_auto_vehicle_msgs message_filters vehicle_info_util)
 
+add_executable(path_conversion src/autoware/conversions/path_conversion.cpp)
+ament_target_dependencies(path_conversion rclcpp std_msgs nav_msgs geometry_msgs autoware_auto_planning_msgs message_filters)
+
+add_executable(objects_provider src/autoware/stub/objects_provider.cpp)
+ament_target_dependencies(objects_provider rclcpp std_msgs autoware_auto_perception_msgs)
+
 add_executable(tf_remap src/transformations/tf_remap.cpp)
 ament_target_dependencies(tf_remap rclcpp std_msgs geometry_msgs tf2_ros)
+
+add_executable(tf_copy src/transformations/tf_copy.cpp)
+ament_target_dependencies(tf_copy rclcpp std_msgs geometry_msgs tf2_ros)
+
+add_executable(tf_project src/transformations/tf_project.cpp)
+ament_target_dependencies(tf_project rclcpp std_msgs geometry_msgs tf2_ros tf2_geometry_msgs)
 
 add_executable(laser_to_pointcloud src/laser_to_pointcloud/laser_to_pointcloud.cpp)
 ament_target_dependencies(laser_to_pointcloud rclcpp std_msgs sensor_msgs geometry_msgs tf2_ros laser_geometry)
@@ -68,7 +82,11 @@ install(TARGETS
   simulation_pose
   globalTF
   vehicle_interface
+  path_conversion
+  objects_provider
   tf_remap
+  tf_copy
+  tf_project
   laser_to_pointcloud
   default_pose_initializer
   DESTINATION lib/${PROJECT_NAME}

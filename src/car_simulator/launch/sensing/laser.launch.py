@@ -33,7 +33,7 @@ def generate_launch_description():
                 'src_topic': 'laser/out',
                 'dst_topic': 'points_raw',
                 'range_cutoff': 1.0,
-                'channel_option': 0
+                'channel_option': 0x1 | 0x8 #TODO: Use python lib enum
             }
         ]
     )
