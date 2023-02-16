@@ -24,6 +24,10 @@ private:
 	std::string path_src_topic_;
 	std::string occupancy_grid_src_topic_;
 	std::string dst_topic_;
+	
+	double max_longitudinal_velocity_mps_;
+	double max_lateral_velocity_mps_;
+	double max_heading_rate_rps_;
 public:
 	PathConverter()
 	: Node("patch_converter")
@@ -31,6 +35,10 @@ public:
 		path_src_topic_ = this->declare_parameter("path_src_topic", "~/input/path");
 		occupancy_grid_src_topic_ = this->declare_parameter("occupancy_grid_src_topic", "~/input/occupancy_grid");
 		dst_topic_ = this->declare_parameter("dst_topic", "~/output/path");
+		
+		max_longitudinal_velocity_mps_ = this->declare_parameter<double>("max_longitudinal_velocity_mps", 100.0);
+		max_lateral_velocity_mps_ = this->declare_parameter<double>("max_lateral_velocity_mps", 100.0);
+		max_heading_rate_rps_ = this->declare_parameter<double>("max_heading_rate_rps", 100.0);
 
 		RCLCPP_INFO_THROTTLE(
 			get_logger(),
@@ -69,9 +77,9 @@ private:
 		for(size_t i = 0; i < path_in->poses.size(); ++i){
 			points[i].pose = path_in->poses[i].pose;
 			//TODO: correct velocities? Done by later stages?
-			points[i].longitudinal_velocity_mps = 0.0;
-			points[i].lateral_velocity_mps = 0.0;
-			points[i].heading_rate_rps = 0.0;
+			points[i].longitudinal_velocity_mps = max_longitudinal_velocity_mps_;
+			points[i].lateral_velocity_mps = max_lateral_velocity_mps_;
+			points[i].heading_rate_rps = max_heading_rate_rps_;
 		}
 		//points[path_in->poses.size() - 1].is_final = true;
 		

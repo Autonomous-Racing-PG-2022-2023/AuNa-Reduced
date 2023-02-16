@@ -112,6 +112,9 @@ def generate_launch_description():
                         'path_src_topic': 'path',
                         'occupancy_grid_src_topic': 'occupancy_grid_map',
                         'dst_topic': 'autoware_path',
+                        'max_longitudinal_velocity_mps': 100.0,
+                        'max_lateral_velocity_mps': 100.0,
+                        'max_heading_rate_rps': 100.0,
                     }
                 ],
             )
