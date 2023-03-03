@@ -63,6 +63,8 @@ def generate_launch_description():
             '-x', x_pose,
             '-y', y_pose,
             '-z', z_pose,
+            '-timeout', 60.0,
+            '-spawn_service_timeout', 60.0,
             '-robot_namespace', gazebo_namespace 
         ]
     )
