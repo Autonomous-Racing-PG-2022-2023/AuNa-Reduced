@@ -11,6 +11,7 @@ def generate_launch_description():
     x_pose = LaunchConfiguration('x_pose', default='0.0')
     y_pose = LaunchConfiguration('y_pose', default='0.0')
     z_pose = LaunchConfiguration('z_pose', default='0.0')
+    timeout = LaunchConfiguration('timeout', default='60.0')
 
     # Launch Arguments
     name_arg = DeclareLaunchArgument(
@@ -38,6 +39,11 @@ def generate_launch_description():
         default_value='0.0',
         description='Robot spawn z position'
     )
+    timeout_arg = DeclareLaunchArgument(
+        'timeout',
+        default_value='60.0',
+        description='Robot spawn timeout'
+    )
     
     #Remove trailing slash
     gazebo_namespace = PythonExpression(
@@ -63,8 +69,7 @@ def generate_launch_description():
             '-x', x_pose,
             '-y', y_pose,
             '-z', z_pose,
-            '-timeout', 60.0,
-            '-spawn_service_timeout', 60.0,
+            '-timeout', timeout,
             '-robot_namespace', gazebo_namespace 
         ]
     )
@@ -77,6 +82,7 @@ def generate_launch_description():
     ld.add_action(x_pose_arg)
     ld.add_action(y_pose_arg)
     ld.add_action(z_pose_arg)
+    ld.add_action(timeout_arg)
 
     ld.add_action(start_gazebo_ros_spawner_cmd)
 
