@@ -12,9 +12,9 @@
     decel_distance_after_curve: 0.2
     min_decel_for_lateral_acc_lim_filter: -250.0
     replan_vel_deviation: 553.0
-    engage_velocity: 1000.0
-    engage_acceleration: 1000.0
-    engage_exit_ratio: 500.0
+    engage_velocity: 0.0
+    engage_acceleration: 0.0
+    engage_exit_ratio: 1.0
     stop_dist_to_prohibit_engage: 0.05
     stopping_velocity: 0.0
     stopping_distance: 0.0

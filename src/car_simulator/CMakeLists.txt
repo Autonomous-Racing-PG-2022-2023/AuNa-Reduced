@@ -1,14 +1,15 @@
 cmake_minimum_required(VERSION 3.5)
 project(car_simulator)
 
-# Default to C++14
+# Default to C++20
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 20)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
+
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
@@ -42,6 +43,12 @@ find_package(vehicle_info_util REQUIRED)
 
 find_package(message_filters REQUIRED)
 
+find_package(PCL REQUIRED)
+find_package(pcl_conversions REQUIRED)
+
+find_package(TBB REQUIRED tbb)
+
+find_package(car_simulator_msgs REQUIRED)
 
 add_executable(localization_pose src/transformations/localization_pose.cpp)
 ament_target_dependencies(localization_pose rclcpp std_msgs geometry_msgs nav_msgs tf2_ros tf2_kdl)
@@ -77,6 +84,30 @@ add_executable(default_pose_initializer src/autoware/ad_api/default_pose_initial
 target_compile_options(default_pose_initializer PRIVATE -DROS_DISTRO_GALACTIC)
 ament_target_dependencies(default_pose_initializer rclcpp std_msgs geometry_msgs tf2_geometry_msgs tier4_autoware_utils autoware_ad_api_specs component_interface_utils)
 
+add_executable(wall_detection src/path_generation/wallfollowing/wall_detection.cpp src/path_generation/wallfollowing/dbscan.cpp src/path_generation/wallfollowing/track.cpp)
+target_link_libraries(wall_detection ${PCL_LIBRARIES} ${TBB_IMPORTED_TARGETS})
+ament_target_dependencies(wall_detection rclcpp std_msgs sensor_msgs geometry_msgs tf2_ros pcl_conversions car_simulator_msgs)
+
+add_executable(wallfollowing src/path_generation/wallfollowing/wallfollowing.cpp src/path_generation/wallfollowing/wallfollowing_node.cpp)
+target_link_libraries(wallfollowing ${PCL_LIBRARIES} ${TBB_IMPORTED_TARGETS})
+ament_target_dependencies(wallfollowing rclcpp std_msgs nav_msgs sensor_msgs geometry_msgs tf2_ros tf2_kdl tf2_geometry_msgs autoware_auto_vehicle_msgs pcl_conversions car_simulator_msgs)
+
+include_directories(SYSTEM
+  ${Boost_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
+)
+link_directories(
+  ${Boost_LIBRARY_DIRS}
+  ${PCL_LIBRARY_DIRS}
+  ${EIGEN3_LIBRARY_DIRS}
+)
+add_definitions(
+  ${Boost_DEFINITIONS}
+  ${PCL_DEFINITIONS}
+  ${EIGEN3_DEFINITIONS}
+)
+
 install(TARGETS
   localization_pose
   simulation_pose
@@ -89,6 +120,8 @@ install(TARGETS
   tf_project
   laser_to_pointcloud
   default_pose_initializer
+  wall_detection
+  wallfollowing
   DESTINATION lib/${PROJECT_NAME}
 )
 

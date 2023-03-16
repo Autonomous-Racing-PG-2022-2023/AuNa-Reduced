@@ -6,6 +6,7 @@ from launch_ros.actions import Node, SetRemap
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch import LaunchDescription
+from car_simulator import SetParametersFromFile
 
 def generate_launch_description():
     # Launch Argument Configurations
@@ -14,6 +15,8 @@ def generate_launch_description():
 
     nav_launch_file_dir = os.path.join(nav2_bringup_pkg_dir, 'launch')
     default_rviz_config_file = os.path.join(pkg_dir, 'rviz','config.rviz')
+    
+    config_file_vehicle = os.path.join(pkg_dir, 'config', 'model_params', 'vehicle_interface.yaml')
     
     namespace = LaunchConfiguration('namespace', default='')
     rviz_config = LaunchConfiguration('rviz_config', default = default_rviz_config_file)
@@ -29,6 +32,7 @@ def generate_launch_description():
             SetRemap(src='/external/selected/control_cmd', dst='control/command/control_cmd'),
             SetRemap(src='/vehicle/status/velocity_status', dst='vehicle/status/velocity_status'),
             SetRemap(src='/vehicle/status/steering_status', dst='vehicle/status/steering_status'),
+            SetParametersFromFile(config_file_vehicle),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(os.path.join(nav_launch_file_dir, 'rviz_launch.py')),
                 launch_arguments={

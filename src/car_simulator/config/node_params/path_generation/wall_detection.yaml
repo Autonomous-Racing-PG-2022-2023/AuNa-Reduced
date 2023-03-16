@@ -1,0 +1,26 @@
+/**:
+  ros__parameters:
+    voxel_size: 0.15
+    min_points_per_voxel: 0
+    filter_by_min_score_enabled: true
+    filter_by_min_score: 0.002
+    sor_enabled: false
+    sor_mean_k: 2.0
+    sor_stddev_mul_thresh: 3.0
+    
+    minimum_points: 4
+    epsilon: 0.47
+    
+    wall_radius: 0.5
+    use_prediction_for_walls: true
+    use_prediction_for_obstacles: true
+    distance_threshold: 0.4
+    score_threshold: 3
+    minimum_confidence: 0.3
+    
+    sac_max_iterations: 99
+    sac_distance_to_model_threshold: 0.1
+    
+    track_radius_propotions: 1.2
+    track_in_front_threshold: 1.0
+    track_upper_wall_offset: 1.5

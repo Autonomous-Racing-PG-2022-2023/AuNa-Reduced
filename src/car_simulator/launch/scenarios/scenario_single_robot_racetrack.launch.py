@@ -36,6 +36,7 @@ def generate_launch_description():
     autowarelaunch_file_dir = os.path.join(pkg_dir, 'launch', 'autoware')
     nav2_file_dir = os.path.join(pkg_dir, 'launch', 'nav2')
     lidarslam_file_dir = os.path.join(pkg_dir, 'launch', 'lidarslam')
+    path_generation_file_dir = os.path.join(pkg_dir, 'launch', 'path_generation')
     rviz_file_dir = os.path.join(pkg_dir, 'launch', 'rviz')
 
     # Launch Argument Configurations
@@ -124,6 +125,12 @@ def generate_launch_description():
         }.items(),
     )
     
+    wallfollowing_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(path_generation_file_dir, 'wallfollowing.launch.py')),
+        launch_arguments={
+        }.items(),
+    )
+    
     control_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(autowarelaunch_file_dir, 'control.launch.py')),
         launch_arguments={
@@ -152,6 +159,7 @@ def generate_launch_description():
     ld.add_action(localization_cmd)
     #ld.add_action(nav2_localization_cmd)
     ld.add_action(lidarslam_cmd)
+    ld.add_action(wallfollowing_cmd)
     ld.add_action(control_cmd)
     ld.add_action(system_cmd)
     ld.add_action(rviz_cmd)

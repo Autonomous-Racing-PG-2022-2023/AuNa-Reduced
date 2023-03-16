@@ -1,0 +1,4 @@
+uint8 CURVE_TYPE_STRAIGHT = 0
+uint8 CURVE_TYPE_RIGHT = 1
+uint8 CURVE_TYPE_LEFT = 2
+uint8 data

@@ -1,0 +1,16 @@
+/**:
+  ros__parameters:
+    min_scan_time_offset: 0.0001
+    max_path_points: 10
+    target_method: "CENTER_PATH"
+    safety_wall_distance: 0.1
+    max_curve_circle_radius: 1000.0
+    max_view_dist_min: 1.0
+    max_view_dist_max: 5.0
+    max_view_dist_radius_multiplier: 0.3
+    prediction_min_distance: 0.1
+    prediction_max_distance: 5.0
+    prediction_time: 0.01
+    prediction_average_weight: 5.0
+    target_min_distance: 0.3
+    target_collision_precision: 0.01

@@ -37,6 +37,8 @@ def generate_launch_description():
                 {
                     'map_frame': 'map',
                     'base_link_frame': [namespace, 'base_link'],
+                    'scan_origin_frame': [namespace, 'base_link'],
+                    'gridmap_origin_frame': [namespace, 'base_link'],
                     'input_obstacle_pointcloud': False,
                     'input_obstacle_and_raw_pointcloud': False,
                 }

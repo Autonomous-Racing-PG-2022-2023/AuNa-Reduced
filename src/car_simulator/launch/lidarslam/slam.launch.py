@@ -109,7 +109,7 @@ def generate_launch_description():
                 output='screen',
                 parameters=[
                     {
-                        'path_src_topic': 'path',
+                        'path_src_topic': 'wallfollowing/output/path',
                         'occupancy_grid_src_topic': 'occupancy_grid_map',
                         'dst_topic': 'autoware_path',
                         'max_longitudinal_velocity_mps': 100.0,

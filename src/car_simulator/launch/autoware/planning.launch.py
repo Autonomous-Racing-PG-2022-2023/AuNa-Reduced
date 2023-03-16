@@ -51,7 +51,7 @@ def generate_launch_description():
     )
     
     #Provides empty PredictedObjects to make object avoidance planner work
-    objects_provider_cmd = GroupAction(
+    start_objects_provider_cmd = GroupAction(
         actions = [
             remap_tf,
             remap_tf_static,
@@ -129,7 +129,7 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     #ld.add_action(start_autoware_external_velocity_limit_selector_cmd)
-    ld.add_action(objects_provider_cmd)
+    ld.add_action(start_objects_provider_cmd)
     ld.add_action(start_autoware_obstacle_avoidance_planner_cmd)
     ld.add_action(start_autoware_motion_velocity_smoother_cmd)
 
