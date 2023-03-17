@@ -18,7 +18,7 @@
   <xacro:property name="bodySizeH" value="0.1"/>
   <xacro:property name="bodyMass" value="3.5"/>
 
-  <xacro:property name="wheel_radius" value="0.05" /> 
+  <xacro:property name="wheel_radius" value="0.055" /> 
   <xacro:property name="wheel_height" value="0.045" />
   <xacro:property name="wheel_mass" value="0.2" />
   

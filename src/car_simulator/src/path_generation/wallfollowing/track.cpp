@@ -135,6 +135,11 @@ car_simulator_msgs::msg::Track TrackGenerator::generateTrack(const pcl::PointClo
 		filter.filter(*upper_cloud_ptr);
 	}
 	
+	//Copy metadata
+	left_cloud_ptr->header = cloud->header;
+	right_cloud_ptr->header = cloud->header;
+	upper_cloud_ptr->header = cloud->header;
+	
 	car_simulator_msgs::msg::Track track;
 	track.header = pcl_conversions::fromPCL(cloud->header);
 	

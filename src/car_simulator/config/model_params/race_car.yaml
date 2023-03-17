@@ -3,11 +3,11 @@ robot:
     length: 0.49
     width: 0.18
     height: 0.1
-    wheelbase: 0.32
+    wheelbase: 0.33
   plugins:
     drive:
       rate: 10.0
-      max_steer: 0.6458
+      max_steer: 0.453786
       max_speed: 1.5
     joint_state_publisher:
       rate: 10.0

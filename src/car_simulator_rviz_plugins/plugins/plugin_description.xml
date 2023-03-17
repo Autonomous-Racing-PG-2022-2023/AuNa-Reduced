@@ -1,0 +1,7 @@
+<library path="car_simulator_rviz_plugins">
+  <class name="rviz_plugins/Track"
+         type="rviz_plugins::TrackDisplay"
+         base_class_type="rviz_common::Display">
+         <description>TrackDisplay</description>
+  </class>
+</library>
