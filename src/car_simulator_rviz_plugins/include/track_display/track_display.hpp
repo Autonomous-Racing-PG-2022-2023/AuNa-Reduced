@@ -49,41 +49,30 @@ private:
 	std::unique_ptr<rviz_default_plugins::PointCloudCommon> upper_point_cloud_;
 	
 	std::unique_ptr<rviz_default_plugins::displays::MarkerCommon> curve_entry_;
-	std::unique_ptr<rviz_default_plugins::displays::MarkerCommon> car_position_;
 	
 	std::unique_ptr<rviz_default_plugins::displays::MarkerCommon> left_circle_;
 	std::unique_ptr<rviz_default_plugins::displays::MarkerCommon> right_circle_;
 	std::unique_ptr<rviz_default_plugins::displays::MarkerCommon> upper_circle_;
 
-	rviz_common::properties::BoolProperty* property_curve_entry_view_;
-	rviz_common::properties::BoolProperty* property_car_position_view_;
+	rviz_common::Display* property_curve_entry_view_;
 	
-	/*
-	rviz_common::properties::BoolProperty* property_left_cloud_view_;
-	rviz_common::properties::BoolProperty* property_right_cloud_view_;
-	rviz_common::properties::BoolProperty* property_upper_cloud_view_;
-	*/
+	rviz_common::Display* property_left_cloud_view_;
+	rviz_common::Display* property_right_cloud_view_;
+	rviz_common::Display* property_upper_cloud_view_;
 	
-	rviz_common::properties::BoolProperty* property_left_circle_view_;
-	rviz_common::properties::BoolProperty* property_right_circle_view_;
-	rviz_common::properties::BoolProperty* property_upper_circle_view_;
+	rviz_common::Display* property_left_circle_view_;
+	rviz_common::Display* property_right_circle_view_;
+	rviz_common::Display* property_upper_circle_view_;
 	
 	rviz_common::properties::FloatProperty* property_curve_entry_point_size_;
-	rviz_common::properties::FloatProperty* property_car_position_point_size_;
-	
-	rviz_common::properties::FloatProperty* property_left_circle_line_width_;
-	rviz_common::properties::FloatProperty* property_right_circle_line_width_;
-	rviz_common::properties::FloatProperty* property_upper_circle_line_width_;
 	
 	rviz_common::properties::FloatProperty* property_curve_entry_alpha_;
-	rviz_common::properties::FloatProperty* property_car_position_alpha_;
 	
 	rviz_common::properties::FloatProperty* property_left_circle_alpha_;
 	rviz_common::properties::FloatProperty* property_right_circle_alpha_;
 	rviz_common::properties::FloatProperty* property_upper_circle_alpha_;
 	
 	rviz_common::properties::ColorProperty* property_curve_entry_color_;
-	rviz_common::properties::ColorProperty* property_car_position_color_;
 	
 	rviz_common::properties::ColorProperty* property_left_circle_color_;
 	rviz_common::properties::ColorProperty* property_right_circle_color_;

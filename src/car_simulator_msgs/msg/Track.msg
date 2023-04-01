@@ -3,8 +3,6 @@ std_msgs/Header header
 car_simulator_msgs/TrackCurveType curve_type
 geometry_msgs/Point curve_entry
 
-geometry_msgs/Point car_position
-
 sensor_msgs/PointCloud2 left_cloud
 sensor_msgs/PointCloud2 right_cloud
 sensor_msgs/PointCloud2 upper_cloud

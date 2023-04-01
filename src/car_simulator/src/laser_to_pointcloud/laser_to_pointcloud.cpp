@@ -34,7 +34,7 @@ public:
 		target_frame_ = this->declare_parameter("target_frame", "base_link");
 		src_topic_ = this->declare_parameter("src_topic", "/laser/out");
 		dst_topic_ = this->declare_parameter("dst_topic", "/pointcloud_raw");
-		range_cutoff_ = this->declare_parameter<double>("range_cutoff", 1.0);
+		range_cutoff_ = this->declare_parameter<double>("range_cutoff", -1.0);
 		chanel_option_ = static_cast<laser_geometry::channel_option::ChannelOption>(this->declare_parameter<int>("channel_option", laser_geometry::channel_option::ChannelOption::Default));
 
 		RCLCPP_INFO_THROTTLE(

@@ -1,0 +1,4 @@
+/**:
+  ros__parameters:
+    stop_check_duration: 1.0
+    require_accept_start: false

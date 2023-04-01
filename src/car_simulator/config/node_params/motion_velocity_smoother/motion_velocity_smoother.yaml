@@ -45,5 +45,5 @@
     over_j_weight: 100.0
     over_stop_velocity_warn_thr: 13.89
     
-    ego_nearest_dist_threshold: 0.0
-    ego_nearest_yaw_threshold: 0.0
+    ego_nearest_dist_threshold: 1.0
+    ego_nearest_yaw_threshold: 1.0

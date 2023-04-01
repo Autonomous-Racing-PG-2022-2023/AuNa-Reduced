@@ -45,7 +45,10 @@
                 <visual name="visual">
                 <geometry>
                     <!-- Relative path defined in package.xml -->
-                    <mesh><uri>model://racetrack/track_decorated.dae</uri></mesh>
+                    <mesh>
+						<uri>model://racetrack/track_decorated.dae</uri>
+						<scale>4 4 1</scale>
+					</mesh>
                 </geometry>
                 </visual>
                 <collision name="ground-collision">
@@ -69,7 +72,10 @@
                 <collision name="walls-collision">
                     <geometry>
                         <!-- Relative path defined in package.xml -->
-                        <mesh><uri>model://racetrack/walls.dae</uri></mesh>
+                        <mesh>
+							<uri>model://racetrack/walls.dae</uri>
+							<scale>4 4 1</scale>
+						</mesh>
                     </geometry>
                     <surface>
                         <friction>
@@ -90,7 +96,10 @@
                 <collision name="decoration-collision">
                     <geometry>
                         <!-- Relative path defined in package.xml -->
-                        <mesh><uri>model://racetrack/decoration_colliders.dae</uri></mesh>
+                        <mesh>
+							<uri>model://racetrack/decoration_colliders.dae</uri>
+							<scale>4 4 1</scale>
+						</mesh>
                     </geometry>
                     <surface>
                         <friction>

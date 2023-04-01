@@ -1,16 +1,21 @@
 /**:
   ros__parameters:
+    enable_debug_topics: true
+  
     min_scan_time_offset: 0.0001
-    max_path_points: 10
+    max_path_points: 2           #NOTE: Currently it does not make much sense to havbe more than two path points. But wallfollowing still is written in a way that allows to add more points (but that may lead to strange results, only do after e.g. adjusting how old points are transformed and sorted out.)
     target_method: "CENTER_PATH"
-    safety_wall_distance: 0.1
-    max_curve_circle_radius: 1000.0
-    max_view_dist_min: 1.0
-    max_view_dist_max: 5.0
-    max_view_dist_radius_multiplier: 0.3
+    
     prediction_min_distance: 0.1
     prediction_max_distance: 5.0
     prediction_time: 0.01
     prediction_average_weight: 5.0
-    target_min_distance: 0.3
-    target_collision_precision: 0.01
+    
+    target_min_distance: 0.7
+    target_collision_precision: 0.0001
+    
+    max_yaw_deviation: 0.7
+    
+    max_longitudinal_velocity_mps: 2.0 #100.0
+    max_lateral_velocity_mps: 0.0
+    max_heading_rate_rps: 0.0

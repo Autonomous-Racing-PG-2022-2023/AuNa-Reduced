@@ -14,7 +14,7 @@
 class TrackGenerator
 {	
 private:
-    static pcl::IndicesConstPtr cropPointcloud(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& cloud, float minimum_y);
+    static pcl::IndicesConstPtr cropPointcloud(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& cloud, float minimum_x);
     static pcl::PointXYZ calcNearestPointToPoint(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& cloud, const pcl::PointXYZ& point);
     static bool isCurveEntryInFront(const pcl::PointXYZ& curve_entry_point, const pcl::PointXYZ& lowest_point, double threshold);
     static pcl::PointXYZ getCurveEntry(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& cloud);

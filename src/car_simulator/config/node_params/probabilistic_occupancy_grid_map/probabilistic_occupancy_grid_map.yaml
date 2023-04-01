@@ -2,5 +2,6 @@
   ros__parameters:
     use_height_filter: true
     enable_single_frame_mode: false
-    map_length: 100.0
-    map_resolution: 0.5
+    map_length: 10.0
+    map_width: 10.0
+    map_resolution: 0.01

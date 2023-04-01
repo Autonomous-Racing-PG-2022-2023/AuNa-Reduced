@@ -45,9 +45,11 @@ def generate_launch_description():
             remap_tf_static,
             SetRemap(src='~/control/command/control_cmd', dst='control/command/control_cmd'),
             SetRemap(src='~/odom', dst='odom'),
+            SetRemap(src='~/imu', dst='imu'),
             SetRemap(src='~/cmd_vel', dst='cmd_vel'),
             SetRemap(src='~/vehicle/status/velocity_status', dst='vehicle/status/velocity_status'),
             SetRemap(src='~/vehicle/status/steering_status', dst='vehicle/status/steering_status'),
+            SetRemap(src='~/vehicle/status/acceleration', dst='vehicle/status/acceleration'),
             Node(
                 package='car_simulator',
                 executable='vehicle_interface',

@@ -78,9 +78,9 @@ def generate_launch_description():
         actions = [
             remap_tf,
             remap_tf_static,
-            SetRemap(src='/localization/kinematic_state', dst='odom'),
+            SetRemap(src='~/input/odometry', dst='odom'),
             SetRemap(src='~/input/objects', dst='predicted_objects'),
-            SetRemap(src='~/input/path', dst='autoware_path'),
+            SetRemap(src='~/input/path', dst='wallfollowing/output/path'),
             SetRemap(src='~/output/path', dst='obstacle_avoidance_planner/output/path'),
             Node(
                 package='obstacle_avoidance_planner',
@@ -120,7 +120,8 @@ def generate_launch_description():
                     config_file_motion_velocity_smoother,
                     {
                     }
-                ]
+                ],
+                prefix=['xterm -e gdb -ex run --args']
             )
         ]
     )
@@ -129,8 +130,8 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     #ld.add_action(start_autoware_external_velocity_limit_selector_cmd)
-    ld.add_action(start_objects_provider_cmd)
+    #ld.add_action(start_objects_provider_cmd)
     ld.add_action(start_autoware_obstacle_avoidance_planner_cmd)
-    ld.add_action(start_autoware_motion_velocity_smoother_cmd)
+    #ld.add_action(start_autoware_motion_velocity_smoother_cmd)
 
     return ld

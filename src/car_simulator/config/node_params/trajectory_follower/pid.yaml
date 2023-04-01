@@ -6,21 +6,21 @@
     delay_compensation_time: 0.17
 
     enable_smooth_stop: true
-    enable_overshoot_emergency: true
-    enable_large_tracking_error_emergency: true
+    enable_overshoot_emergency: false
+    enable_large_tracking_error_emergency: false
     enable_slope_compensation: false
-    enable_keep_stopped_until_steer_convergence: true
+    enable_keep_stopped_until_steer_convergence: false
 
     # state transition
-    drive_state_stop_dist: 0.05
-    drive_state_offset_stop_dist: 0.1
+    drive_state_stop_dist: 0.0 # 0.05 # Set to 0.0 to keep vehicle from stopping at close path points
+    drive_state_offset_stop_dist: 0.0 # 0.1 # Set to 0.0 to make vehicle start even for near path points
     stopping_state_stop_dist: 0.049
     stopped_state_entry_duration_time: 0.1
     stopped_state_entry_vel: 0.1
     stopped_state_entry_acc: 0.1
-    emergency_state_overshoot_stop_dist: 0.15
-    emergency_state_traj_trans_dev: 0.3
-    emergency_state_traj_rot_dev: 0.07
+    emergency_state_overshoot_stop_dist: 0.15 # TODO: Maybe set to 0.0 # Makes vehicle stop if velocity is 0.0 and we are near the end of the trajectory or the 0.0 speed point
+    emergency_state_traj_trans_dev: 3.0
+    emergency_state_traj_rot_dev: 1.0 #0.7
 
     # drive state
     kp: 1.0
@@ -54,20 +54,20 @@
 
     # stopped state
     stopped_vel: 0.0
-    stopped_acc: -3.4
+    stopped_acc: -5.0
     stopped_jerk: -5.0
 
     # emergency state
     emergency_vel: 0.0
     emergency_acc: -5.0
-    emergency_jerk: -3.0
+    emergency_jerk: -5.0
 
     # acceleration limit
-    max_acc: 3.0
+    max_acc: 5.0
     min_acc: -5.0
 
     # jerk limit
-    max_jerk: 2.0
+    max_jerk: 5.0
     min_jerk: -5.0
 
     # pitch

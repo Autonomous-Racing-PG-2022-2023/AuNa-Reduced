@@ -1,6 +1,5 @@
 #include "track.hpp"
 
-#include <pcl/filters/conditional_removal.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/sample_consensus/sac_model_circle.h>
@@ -12,20 +11,19 @@
 
 pcl::IndicesConstPtr TrackGenerator::cropPointcloud(
 	const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& cloud,
-	float minimum_y
+	float minimum_x
 )
 {
 	pcl::PointCloud<pcl::PointXYZ> cloud_out;
 	
-	pcl::PassThrough<pcl::PointXYZ> filter(false);
-	filter.setFilterFieldName("y");
-	filter.setFilterLimits(std::numeric_limits<float>::lowest(), minimum_y);
-	filter.setNegative(true);
+	pcl::PassThrough<pcl::PointXYZ> filter(true);
+	filter.setFilterFieldName("x");
+	filter.setFilterLimits(std::numeric_limits<float>::lowest(), minimum_x);
 	
 	filter.setInputCloud(cloud);
 	filter.filter(cloud_out);
 
-    return filter.getIndices();
+    return filter.getRemovedIndices();//Negate by fetiching removed indices
 }
 
 pcl::PointXYZ TrackGenerator::calcNearestPointToPoint(
@@ -40,11 +38,11 @@ pcl::PointXYZ TrackGenerator::calcNearestPointToPoint(
 
 bool TrackGenerator::isCurveEntryInFront(const pcl::PointXYZ& curve_entry_point, const pcl::PointXYZ& lowest_point, double threshold)
 {
-    if (lowest_point.x - curve_entry_point.x == 0)
+    if (lowest_point.y - curve_entry_point.y == 0)
     {
         return true;
     }
-    double val = (lowest_point.y - curve_entry_point.y) / (lowest_point.x - curve_entry_point.x);
+    double val = (lowest_point.x - curve_entry_point.x) / (lowest_point.y - curve_entry_point.y);
     return fabsf(val) > threshold;
 }
 
@@ -53,12 +51,14 @@ pcl::PointXYZ TrackGenerator::getCurveEntry(
 )
 {
    return *(std::max_element(cloud->begin(), cloud->end(), [](const pcl::PointXYZ& a, const pcl::PointXYZ& b){
-	   return (a.y < b.y);
+	   return (a.x < b.x);
    }));
 }
 
 car_simulator_msgs::msg::Track TrackGenerator::generateTrack(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& cloud, pcl::IndicesConstPtr left_wall, pcl::IndicesConstPtr right_wall, double radius_propotions, double in_front_threshold, double upper_wall_offset, double sac_distance_to_model_threshold, int sac_max_iterations)
 {
+	(void) radius_propotions;
+	
 	pcl::IndicesConstPtr upper_wall;
 	pcl::PointCloud<pcl::PointXYZ>::ConstPtr upper_cloud_src_ptr;
 	
@@ -96,9 +96,10 @@ car_simulator_msgs::msg::Track TrackGenerator::generateTrack(const pcl::PointClo
 
 	// With radius_proportions can be checked whether the car is approaching a curve or is on a straight part of the
     // track.
-    double radius_proportions_left = left_circle.getRadius() / right_circle.getRadius();
-    double radius_proportions_right = right_circle.getRadius() / left_circle.getRadius();
-    if (radius_proportions_left > radius_propotions && right_circle.getCenter().x < 0)
+	//TODO: Also somehow move in the middle of the track if we are not in a curve
+    //double radius_proportions_left = left_circle.getRadius() / right_circle.getRadius();
+    //double radius_proportions_right = right_circle.getRadius() / left_circle.getRadius();
+    if (right_circle.getCenter().y > 0)//TODO: radius_proportions_left > radius_propotions)
     {
         curve_entry = getCurveEntry(left_cloud_ptr);
         pcl::PointXYZ nearest_point_to_car = calcNearestPointToPoint(left_cloud_ptr, car_position);
@@ -109,7 +110,7 @@ car_simulator_msgs::msg::Track TrackGenerator::generateTrack(const pcl::PointClo
             curve_type.data = car_simulator_msgs::msg::TrackCurveType::CURVE_TYPE_LEFT;
         }
     }
-    else if (radius_proportions_right > radius_propotions && left_circle.getCenter().x > 0)
+    else if (left_circle.getCenter().y < 0)//TODO: radius_proportions_right > radius_propotions)
     {
         curve_entry = getCurveEntry(right_cloud_ptr);
         pcl::PointXYZ nearest_point_to_car = calcNearestPointToPoint(right_cloud_ptr, car_position);
@@ -124,7 +125,7 @@ car_simulator_msgs::msg::Track TrackGenerator::generateTrack(const pcl::PointClo
 	if(upper_wall && upper_wall->size() > 2){
 		if (curve_type.data != car_simulator_msgs::msg::TrackCurveType::CURVE_TYPE_STRAIGHT)
 		{
-			upper_circle = FitWalls::fitWall<pcl::PointXYZ>(cloud, upper_wall, sac_distance_to_model_threshold, sac_max_iterations);
+			upper_circle = FitWalls::fitWall<pcl::PointXYZ>(upper_cloud_src_ptr, upper_wall, sac_distance_to_model_threshold, sac_max_iterations);
 		}
 		
 		//Generate upper cloud
@@ -147,10 +148,6 @@ car_simulator_msgs::msg::Track TrackGenerator::generateTrack(const pcl::PointClo
 	track.curve_entry.x = curve_entry.x;
 	track.curve_entry.y = curve_entry.y;
 	track.curve_entry.z = curve_entry.z;
-	  
-	track.car_position.x = car_position.x;
-	track.car_position.y = car_position.y;
-	track.car_position.z = car_position.z;
 	  
     pcl::toROSMsg(*left_cloud_ptr, track.left_cloud);
 	pcl::toROSMsg(*right_cloud_ptr, track.right_cloud);

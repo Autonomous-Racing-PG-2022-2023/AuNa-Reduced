@@ -19,8 +19,7 @@
 #include <memory>
 #include <utility>
 
-//odom => Speed with covariance; Also pose if necessary
-
+//TODO: Maybe use frames for tranmslation?
 VehicleInterface::VehicleInterface()
 : Node("vehicle_interface"),
   vehicle_info_(vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo())
@@ -29,18 +28,17 @@ VehicleInterface::VehicleInterface()
 	base_frame_id_ = declare_parameter("base_frame_id", "base_link");
 	steering_frame_id_ = declare_parameter("steering_frame_id", "left_steering");
 	
+	steering_translation_ratio_ = declare_parameter<double>("steering_translation_ratio", 1.0);
+	
 	RCLCPP_INFO_THROTTLE(
 		get_logger(),
 		*get_clock(),
 		std::chrono::milliseconds(1000).count(),
-		"base_frame_id: %s, loop_rate: %lf",
+		"base_frame_id: %s, steering_frame_id: %s, steering_translation_ratio: %lf",
 		base_frame_id_.c_str(),
-		loop_rate_
+		steering_frame_id_.c_str(),
+		steering_translation_ratio_
 	);
-
-	/* parameters for vehicle specifications */
-	tire_radius_ = vehicle_info_.wheel_radius_m;
-	wheel_base_ = vehicle_info_.wheel_base_m;
 
 	/* subscribers */
 	using std::placeholders::_1;
@@ -60,12 +58,27 @@ VehicleInterface::VehicleInterface()
 		std::bind(&VehicleInterface::callbackOdom, this, _1)
 	);
 	
+	imu_sub_ = create_subscription<sensor_msgs::msg::Imu>(
+		"~/imu",
+		rclcpp::QoS{1},
+		std::bind(&VehicleInterface::callbackImu, this, _1)
+	);
+	
 	tf_sub_ = create_subscription<tf2_msgs::msg::TFMessage>(
 		"tf",
 		rclcpp::QoS{1},
 		std::bind(&VehicleInterface::callbackTf, this, _1)
 	);
 	//TODO:Maybe use filter
+	
+	tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
+	std::shared_ptr<tf2_ros::CreateTimerROS> timer_interface = std::make_shared<tf2_ros::CreateTimerROS>(
+		this->get_node_base_interface(),
+		this->get_node_timers_interface()
+	);
+	tf_buffer_->setCreateTimerInterface(timer_interface);
+	
+	tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
 	/* publisher */
 	
@@ -84,6 +97,12 @@ VehicleInterface::VehicleInterface()
 		"~/vehicle/status/steering_status",
 		rclcpp::QoS{1}
 	);
+	acceleration_status_pub_ = create_publisher<geometry_msgs::msg::AccelWithCovarianceStamped>(
+		"~/vehicle/status/acceleration",
+		rclcpp::QoS{1}
+	);
+	
+
 	
 }
 
@@ -97,16 +116,13 @@ void VehicleInterface::callbackControlCmd(
 	
 	/* publish cmd_vel */
 	{
-		
 		geometry_msgs::msg::Twist cmd_vel;
 		
 		geometry_msgs::msg::Vector3 linear;
 		linear.x = control_cmd_ptr_->longitudinal.speed;
 		cmd_vel.linear = linear;
 		
-		geometry_msgs::msg::Vector3 angular;
-		angular.z = control_cmd_ptr_->lateral.steering_tire_angle;
-		cmd_vel.angular = angular;
+		cmd_vel.angular.z = this->steering_translation_ratio_ * control_cmd_ptr_->lateral.steering_tire_angle;
 		
 		cmd_vel_pub_->publish(cmd_vel);
 	}
@@ -131,14 +147,58 @@ void VehicleInterface::callbackOdom(
 			autoware_auto_vehicle_msgs::msg::VelocityReport twist;
 			twist.header = header;
 			twist.longitudinal_velocity = odom_ptr_->twist.twist.linear.x;
-			twist.lateral_velocity = odom_ptr_->twist.twist.linear.z;
-			twist.heading_rate = odom_ptr_->twist.twist.linear.y;
+			twist.lateral_velocity = odom_ptr_->twist.twist.linear.y;
+			twist.heading_rate = odom_ptr_->twist.twist.linear.z;
 			vehicle_twist_pub_->publish(twist);
 		}
 	}
 	
 }
 
+void VehicleInterface::callbackImu(
+	const sensor_msgs::msg::Imu::ConstSharedPtr msg
+)
+{
+	sensor_msgs::msg::Imu::ConstSharedPtr imu_ptr_ = msg;
+	
+	//Transform into base_frame
+	geometry_msgs::msg::TransformStamped transform_msg;
+	try{
+		transform_msg = tf_buffer_->lookupTransform(this->base_frame_id_, imu_ptr_->header.frame_id, tf2::TimePointZero);//FIXME: Check for matching timestamp tf2_ros::fromMsg(t_link.header.stamp));
+	} catch (std::exception& e) {
+		RCLCPP_ERROR(this->get_logger(), "%s", e.what());
+		return;
+	}
+	
+	tf2::Transform tf_transform;
+	tf2::fromMsg(transform_msg.transform, tf_transform);
+	
+	tf2::Vector3 tf_linear_acceleration(imu_ptr_->linear_acceleration.x, imu_ptr_->linear_acceleration.y, imu_ptr_->linear_acceleration.z);
+	tf2::Vector3 tf_angular_velocity(imu_ptr_->angular_velocity.x, imu_ptr_->angular_velocity.y, imu_ptr_->angular_velocity.z);
+	
+	const tf2::Vector3 tf_transformed_linear_acceleration = tf_transform * tf_linear_acceleration;
+	const tf2::Vector3 tf_transformed_angular_velocity = tf_transform * tf_angular_velocity;
+
+	std_msgs::msg::Header header = transform_msg.header;
+
+	/* publish acceleration status */
+	{
+		geometry_msgs::msg::AccelWithCovarianceStamped accel;
+		accel.header = header;
+		accel.accel.accel.linear.x = tf_transformed_linear_acceleration.x();
+		accel.accel.accel.linear.y = tf_transformed_linear_acceleration.y();
+		accel.accel.accel.linear.y = tf_transformed_linear_acceleration.y();
+		//TODO: Do we need angular velocity or angular acceleration?
+		accel.accel.accel.angular.x = tf_transformed_angular_velocity.x();
+		accel.accel.accel.angular.y = tf_transformed_angular_velocity.y();
+		accel.accel.accel.angular.y = tf_transformed_angular_velocity.y();
+		//TODO: Fill covariance!
+		acceleration_status_pub_->publish(accel);
+	}
+	
+}
+
+//TODO: Fetch steeting status directly from motor and use steering_translation_ratio_ accordingly here too.
 void VehicleInterface::callbackTf(
 	const tf2_msgs::msg::TFMessage::ConstSharedPtr msg
 )
@@ -152,9 +212,12 @@ void VehicleInterface::callbackTf(
 
 			/* publish current status steering */
 			{
+				const geometry_msgs::msg::Quaternion rotation = current_transform.transform.rotation;
+				const double yaw = std::atan2(2.0 * (rotation.x * rotation.y + rotation.w * rotation.z), rotation.w * rotation.w + rotation.x * rotation.x - rotation.y * rotation.y - rotation.z * rotation.z);
+				
 				autoware_auto_vehicle_msgs::msg::SteeringReport steer_msg;
 				steer_msg.stamp = current_transform.header.stamp;
-				steer_msg.steering_tire_angle = current_transform.transform.rotation.z * 100.0;//Desired steering angle
+				steer_msg.steering_tire_angle = yaw;//Counter-clockwise is positive for ros and autoware
 				steering_status_pub_->publish(steer_msg);
 			}
 			break;

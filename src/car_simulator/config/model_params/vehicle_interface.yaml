@@ -10,6 +10,8 @@
     right_overhang: 0.02125 # between right wheel center and vehicle right
     vehicle_height: 0.215
     max_steer_angle: 0.453786 # [rad]
-    length: 0.49
-    width: 0.18
-    height: 0.1 
+    length: 0.205
+    width: 0.675
+    height: 0.215
+    
+    steering_translation_ratio: 1.15 # This should be the translation ratio between motor and wheel

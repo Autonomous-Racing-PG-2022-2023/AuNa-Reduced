@@ -17,7 +17,6 @@ def generate_launch_description():
     
     # Launch Argument Configurations
     namespace = LaunchConfiguration('namespace', default='')
-    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
 
     # Nodes and other launch files
     push_namespace = PushRosNamespace(namespace)
@@ -43,7 +42,7 @@ def generate_launch_description():
                     config_file_scanmatcher,
                     {
                         'global_frame_id': 'map',
-                        'robot_frame_id': [namespace, 'slam_base_link'],
+                        'robot_frame_id': [namespace, 'base_link'],
                         'odom_frame_id': [namespace, 'odom'],
                     }
                 ]
@@ -126,8 +125,8 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     ld.add_action(start_scanmatcher_cmd)
-    ld.add_action(tf_remap_cmd)
-    ld.add_action(tf_project_cmd)
-    ld.add_action(path_conversion_cmd)
+    #ld.add_action(tf_remap_cmd)
+    #ld.add_action(tf_project_cmd)
+    #ld.add_action(path_conversion_cmd)
 
     return ld

@@ -6,6 +6,7 @@
 #include <vector>
 #include <limits>
 
+#include <pcl/pcl_base.h>
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 #include <pcl/octree/octree_search.h>
@@ -24,18 +25,18 @@ public:
 	static constexpr int SUCCESS = 0;
 	static constexpr int FAILURE = -3;
 	
-    DBSCAN(const pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBL>& octree, pcl::PointCloud<pcl::PointXYZRGBL>::Ptr& points, unsigned int minPoints, float eps)
-    :m_octree(octree), m_points(points), m_minPoints(minPoints), m_epsilon(eps)
+    DBSCAN(pcl::PointCloud<pcl::PointXYZRGBL>::Ptr points, unsigned int minPoints, float eps)
+    : m_points(points), m_minPoints(minPoints), m_epsilon(eps)
 	{}
 	
     ~DBSCAN()
     {}
 
-    int run();
-    int expandCluster(Point_& point, uint32_t clusterID);
+    uint32_t run(const pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBL>& octree, const pcl::IndicesConstPtr indices, uint32_t firstClusterID);
+	uint32_t run(const pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBL>& octree, uint32_t firstClusterID);
+    int expandCluster(const pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBL>& octree, Point_& point, uint32_t clusterID);
 
     private:
-	const pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBL>& m_octree;
 	pcl::PointCloud<pcl::PointXYZRGBL>::Ptr m_points;
 	unsigned int m_minPoints;
 	float m_epsilon;

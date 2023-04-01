@@ -11,7 +11,6 @@ from car_simulator import yaml_launch, SetParametersFromFile
 def generate_launch_description():
     # Package Directories
     pkg_dir = get_package_share_directory('car_simulator')
-    pkg_probabilistic_occupancy_grid_map = get_package_share_directory('probabilistic_occupancy_grid_map')
     
     # Paths to folders and files
     config_dir_probabilistic_occupancy_grid_map = os.path.join(pkg_dir, 'config', 'node_params', 'probabilistic_occupancy_grid_map')
@@ -40,7 +39,7 @@ def generate_launch_description():
                     'scan_origin_frame': [namespace, 'base_link'],
                     'gridmap_origin_frame': [namespace, 'base_link'],
                     'input_obstacle_pointcloud': False,
-                    'input_obstacle_and_raw_pointcloud': False,
+                    'input_obstacle_and_raw_pointcloud': False
                 }
             ]
         )
@@ -65,6 +64,7 @@ def generate_launch_description():
             SetRemap(src='~/input/raw_pointcloud', dst='points_raw'),
             SetRemap(src='~/input/laserscan', dst='laser/out'),
             SetRemap(src='~/output/occupancy_grid_map', dst='occupancy_grid_map'),
+            SetParametersFromFile(config_file_probabilistic_occupancy_grid_map),#TODO: Not sure why, but this seems to be necessary for composable nodes
             occupancy_grid_map_container
         ]
     )
@@ -72,6 +72,6 @@ def generate_launch_description():
     # Launch Description
     ld = LaunchDescription()
 
-    ld.add_action(start_probabilistic_occupancy_grid_map_cmd)
+    #ld.add_action(start_probabilistic_occupancy_grid_map_cmd)
 
     return ld

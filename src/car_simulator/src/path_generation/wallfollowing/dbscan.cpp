@@ -3,28 +3,45 @@
 #include <algorithm>
 #include <execution>
 
-int DBSCAN::run()
+uint32_t DBSCAN::run(const pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBL>& octree, const pcl::IndicesConstPtr indices, uint32_t firstClusterID)
 {
-    uint32_t clusterID = 1;
-    for (size_t i = 0; i < m_points->size(); i++)
+    uint32_t clusterID = firstClusterID;
+    for (const size_t index : *indices)
     {
-        if (m_points->at(i).label == UNCLASSIFIED)
+        if (m_points->at(index).label == UNCLASSIFIED)
         {
-            if (expandCluster(m_points->at(i), clusterID) != FAILURE)
+            if (expandCluster(octree, m_points->at(index), clusterID) != FAILURE)
             {
                 clusterID += 1;
             }
         }
     }
 
-    return 0;
+    return clusterID;
 }
 
-int DBSCAN::expandCluster(Point_& point, uint32_t clusterID)
+uint32_t DBSCAN::run(const pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBL>& octree, uint32_t firstClusterID)
+{
+    uint32_t clusterID = firstClusterID;
+    for (size_t index = 0; index < m_points->size(); index++)
+    {
+        if (m_points->at(index).label == UNCLASSIFIED)
+        {
+            if (expandCluster(octree, m_points->at(index), clusterID) != FAILURE)
+            {
+                clusterID += 1;
+            }
+        }
+    }
+
+    return clusterID;
+}
+
+int DBSCAN::expandCluster(const pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBL>& octree, Point_& point, uint32_t clusterID)
 {
     pcl::Indices clusterSeeds;
 	std::vector<float> squared_distances;
-	m_octree.radiusSearch(point, m_epsilon, clusterSeeds, squared_distances);
+	octree.radiusSearch(point, m_epsilon, clusterSeeds, squared_distances);
 
     if (clusterSeeds.size() < m_minPoints)
     {
@@ -33,7 +50,7 @@ int DBSCAN::expandCluster(Point_& point, uint32_t clusterID)
     }
     else
     {
-		std::for_each(std::execution::par, clusterSeeds.begin(), clusterSeeds.end(), [this, &clusterID](const uint32_t index){
+		std::for_each(std::execution::par_unseq, clusterSeeds.begin(), clusterSeeds.end(), [this, &clusterID](const uint32_t index){
 			m_points->at(index).label = clusterID;
 		});
 
@@ -41,7 +58,7 @@ int DBSCAN::expandCluster(Point_& point, uint32_t clusterID)
         for (std::vector<uint32_t>::size_type i = 0, n = clusterSeeds.size(); i < n; ++i)
         {
             pcl::Indices clusterNeighors;
-			m_octree.radiusSearch(m_points->at(clusterSeeds[i]), m_epsilon, clusterNeighors, squared_distances);
+			octree.radiusSearch(m_points->at(clusterSeeds[i]), m_epsilon, clusterNeighors, squared_distances);
 
             if (clusterNeighors.size() >= m_minPoints)
             {

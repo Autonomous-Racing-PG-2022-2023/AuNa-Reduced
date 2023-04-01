@@ -127,7 +127,10 @@ class TFProjector : public rclcpp::Node {
 	void sendStaticTransform(const tf2_msgs::msg::TFMessage& msg) {
 		for(const geometry_msgs::msg::TransformStamped& current_transform: msg.transforms) {
 			auto predicate = [&current_transform](const geometry_msgs::msg::TransformStamped existing) {
-				return current_transform.child_frame_id == existing.child_frame_id;
+				return (
+					(current_transform.header.frame_id == existing.header.frame_id)
+					&&(current_transform.child_frame_id == existing.child_frame_id)
+				);
 			};
 			auto existing = std::find_if(net_message_.transforms.begin(), net_message_.transforms.end(), predicate);
 

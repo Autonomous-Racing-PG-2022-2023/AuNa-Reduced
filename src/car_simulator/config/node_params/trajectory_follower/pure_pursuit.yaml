@@ -6,9 +6,9 @@
     ld_velocity_ratio: 2.4
     ld_lateral_error_ratio: 3.6
     ld_curvature_ratio: 120.0
-    long_ld_lateral_error_threshold: 0.5
-    min_lookahead_distance: 0.435
-    max_lookahead_distance: 1.5
+    long_ld_lateral_error_threshold: 0.0 #0.05 #Setting this to 0 means, that we are always considering the lateral_error when calculatinf löookahead_distance
+    min_lookahead_distance: 2.0 #0.435
+    max_lookahead_distance: 15.0
     converged_steer_rad: 0.1
     reverse_min_lookahead_distance: 0.7
     prediction_ds: 0.3

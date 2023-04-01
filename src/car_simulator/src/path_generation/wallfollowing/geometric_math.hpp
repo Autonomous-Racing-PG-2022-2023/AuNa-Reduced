@@ -31,8 +31,6 @@ struct Line
 
 namespace GeometricFunctions
 {
-    const double PI = std::acos(-1);
-
 	template<typename PointT>
     inline double calcShortestDistanceToLine(const PointT& point, const Line<PointT>& line)
 	{
