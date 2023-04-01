@@ -329,8 +329,6 @@ void Wallfollowing::setPathBounds(pcl::PointCloud<pcl::PointXYZ>& left_cloud, pc
 	std::vector<convex_hull::point> left_hull = getConvexHull2D(left_cloud);
 	std::vector<convex_hull::point> right_hull = getConvexHull2D(right_cloud);
 	
-	//TODO: Retest and make this work.
-	/*
 	//If path point is outside of path bounds, add additional bound points
 	
 	//First create hull around all drivable area
@@ -366,23 +364,29 @@ void Wallfollowing::setPathBounds(pcl::PointCloud<pcl::PointXYZ>& left_cloud, pc
 				difference.x /= line.length();
 				difference.y /= line.length();
 				
-				//Get orthogonal vector in outer direction (assuming convex hull is clock-wise ordered)
+				//Get orthogonal vector in outer direction (assuming convex hull is counter-clock-wise ordered)
 				convex_hull::point rotated;
-				rotated.x = difference.y;
-				rotated.y = -difference.x;
+				rotated.x = -difference.y;
+				rotated.y = difference.x;
 				
-				//Calculate new point
+				//Calculate new point (definitly outside of radius)
 				convex_hull::point new_point;
-				new_point.x = point.x + rotated.x * car_radius;
-				new_point.y = point.y + rotated.y * car_radius;
+				new_point.x = point.x + rotated.x * (2.0 * car_radius);
+				new_point.y = point.y + rotated.y * (2.0 * car_radius);
 				
 				hull.insert(hull.begin() + i, new_point);
-				left_hull.push_back(new_point);//TODO:Somehow determine right place for the point and put it in there
+				
+				//Insert on correct side based on angle
+				const double angle = std::atan2(new_point.y, new_point.x);
+				if(angle >= 0.0){
+					left_hull.push_back(new_point);
+				}else{
+					right_hull.push_back(new_point);
+				}
 				break;//Continue with next point
 			}
 		}
 	}
-	*/
 	
 	//Only consider line on the inner side of the track
 	boost::geometry::model::d2::point_xy<float, boost::geometry::cs::cartesian> car_position(0.0, 0.0);
@@ -440,17 +444,17 @@ void Wallfollowing::setPathBounds(pcl::PointCloud<pcl::PointXYZ>& left_cloud, pc
 		return false;
 	}), right_hull.end());
 	
-	//Sort by angle around center (with -1/2 pi as 0, cw for left, ccw for right)
+	//Sort by angle around center (cw for left, ccw for right)
 	std::sort(std::execution::par_unseq, left_hull.begin(), left_hull.end(), [](const convex_hull::point& a, const convex_hull::point& b){
-		const double angle_a = -std::fmod(std::atan2(a.y, a.x) + M_PI_2, 2.0 * M_PI);
-		const double angle_b = -std::fmod(std::atan2(b.y, b.x) + M_PI_2, 2.0 * M_PI);
+		const double angle_a = std::atan2(a.y, a.x);
+		const double angle_b = std::atan2(b.y, b.x);
 		
 		return angle_a < angle_b;
 	});
 	
 	std::sort(std::execution::par_unseq, right_hull.begin(), right_hull.end(), [](const convex_hull::point& a, const convex_hull::point& b){
-		const double angle_a = std::fmod(std::atan2(a.y, a.x) + M_PI_2, 2.0 * M_PI);
-		const double angle_b = std::fmod(std::atan2(b.y, b.x) + M_PI_2, 2.0 * M_PI);
+		const double angle_a = -std::atan2(a.y, a.x);
+		const double angle_b = -std::atan2(b.y, b.x);
 		
 		return angle_a < angle_b;
 	});
