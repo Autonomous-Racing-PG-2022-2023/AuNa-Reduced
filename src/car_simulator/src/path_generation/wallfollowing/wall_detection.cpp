@@ -244,6 +244,7 @@ int64_t WallDetection::findLargestCluster(
     return largestClusterID;
 }
 
+//TODO: Still not perfect. Might detect track direction correctly, but same cluster might lie on left and right side causing problems when detecting. Fix this (e.g. by testing, on which side of the line most clusterpoints lie).
 std::pair<int64_t, int64_t> WallDetection::determineWallIDs(
 	const pcl::PointCloud<pcl::PointXYZRGBL>::ConstPtr cloud,
     const std::unordered_map<uint32_t, pcl::IndicesPtr>& mapToCheck,

@@ -39,6 +39,8 @@ Wallfollowing::Wallfollowing()
 	target_collision_precision_ = declare_parameter<double>("target_collision_precision", 0.01);
 	max_yaw_deviation_ = declare_parameter<double>("max_yaw_deviation", 0.7);
 	
+	stop_detection_speed_threshold_ = declare_parameter<double>("stop_detection_speed_threshold", 0.1);
+	
 	max_longitudinal_velocity_mps_ = this->declare_parameter<double>("max_longitudinal_velocity_mps", 100.0);
 	max_lateral_velocity_mps_ = this->declare_parameter<double>("max_lateral_velocity_mps", 100.0);
 	max_heading_rate_rps_ = this->declare_parameter<double>("max_heading_rate_rps", 100.0);
@@ -50,7 +52,7 @@ Wallfollowing::Wallfollowing()
 		"enable_debug_topics: %s, frame_id: %s, min_scan_time_offset: %lf, max_path_points: %d, target_method: %d, "
 		"prediction_min_distance: %lf, "
 		"prediction_max_distance: %lf, prediction_time: %lf, prediction_average_weight: %lf, target_min_distance: %lf, "
-		"target_collision_precision: %lf, max_yaw_deviation: %lf, max_longitudinal_velocity_mps: %lf, max_lateral_velocity_mps: %lf, max_heading_rate_rps: %lf",
+		"target_collision_precision: %lf, max_yaw_deviation: %lf, stop_detection_speed_threshold: %lf, max_longitudinal_velocity_mps: %lf, max_lateral_velocity_mps: %lf, max_heading_rate_rps: %lf",
 		(enable_debug_topics_ ? "true" : "false"),
 		frame_id_.c_str(),
 		min_scan_time_offset_,
@@ -63,6 +65,7 @@ Wallfollowing::Wallfollowing()
 		target_min_distance_,
 		target_collision_precision_,
 		max_yaw_deviation_,
+		stop_detection_speed_threshold_,
 		max_longitudinal_velocity_mps_,
 		max_lateral_velocity_mps_,
 		max_heading_rate_rps_
@@ -504,7 +507,7 @@ pcl::PointXYZ Wallfollowing::determinePredictedCarPosition()
 	const double speed = std::sqrt(currentVelocityReport.lateral_velocity * currentVelocityReport.lateral_velocity + currentVelocityReport.longitudinal_velocity * currentVelocityReport.longitudinal_velocity);
 	
 	//If speed is 0.0 use min distance
-	if(speed > 0.0){
+	if(speed > stop_detection_speed_threshold_){
 		//Calcule prediction distance and position
 		rclcpp::Duration delta_time = (this->now() - currentVelocityReport.header.stamp) + rclcpp::Duration::from_seconds(prediction_time_);
 		double prediction_distance = std::min(prediction_min_distance_ + speed * delta_time.seconds(), prediction_max_distance_);
@@ -603,7 +606,18 @@ void Wallfollowing::followWalls(const car_simulator_msgs::msg::Track::ConstShare
 	
 	//Put point in center of track
 	const std::pair<std::size_t, std::size_t> nearest_points = getNearestPoints(left_octree, right_octree, predicted_position);
-	const pcl::PointXYZ target_position = determineTrackCenter(left_cloud->at(nearest_points.first), right_cloud->at(nearest_points.second), pcl::PointXYZ(), max_yaw_deviation_);
+	pcl::PointXYZ target_position = determineTrackCenter(left_cloud->at(nearest_points.first), right_cloud->at(nearest_points.second), pcl::PointXYZ(), max_yaw_deviation_);
+	
+	//If target_position is negative use predicted pos. If target_position is too near, move it farer away
+	const double target_position_distance = std::sqrt(target_position.x * target_position.x + target_position.y * target_position.y);
+	if(target_position.x < 0.0){
+		target_position = predicted_position;
+	}else if(target_position_distance < target_min_distance_){
+		const double target_position_new_distance = (std::max(target_position_distance, target_min_distance_) / target_position_distance);
+		target_position.x *= target_position_new_distance;
+		target_position.y *= target_position_new_distance;
+		target_position.z *= target_position_new_distance;
+	}
 	
 	//Calculate orientation
 	const pcl::PointXYZ direction = determineTrackDirection(left_cloud->at(nearest_points.first), right_cloud->at(nearest_points.second), pcl::PointXYZ(), max_yaw_deviation_);

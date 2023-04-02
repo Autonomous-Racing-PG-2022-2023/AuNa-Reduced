@@ -85,6 +85,7 @@ private:
 	double target_min_distance_;
 	double target_collision_precision_;
 	double max_yaw_deviation_;
+	double stop_detection_speed_threshold_;
 	double max_longitudinal_velocity_mps_;
 	double max_lateral_velocity_mps_;
 	double max_heading_rate_rps_;
