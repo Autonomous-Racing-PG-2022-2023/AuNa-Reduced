@@ -6,7 +6,7 @@
       enable_smoothing: false                                       # enable path smoothing by elastic band
       enable_skip_optimization: true                              # skip elastic band and model predictive trajectory
       enable_reset_prev_optimization: true                        # If true, optimization has no fix constraint to the previous result.
-      enable_outside_drivable_area_stop: true                      # stop if the ego's trajectory footprint is outside the drivable area
+      enable_outside_drivable_area_stop: false #NOTE: Disabled cause it only caused problems. Maybe might be enabled if we managed to savely move around that probelm (current solution is already good, but still got flaws somehow). Maybe re-enable when wall clusters are detected correctly.                     # stop if the ego's trajectory footprint is outside the drivable area
       use_footprint_polygon_for_outside_drivable_area_check: true  # If false, only the footprint's corner points are considered.
 
       debug:

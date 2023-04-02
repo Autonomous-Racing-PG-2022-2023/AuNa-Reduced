@@ -44,4 +44,17 @@ namespace GeometricFunctions
 						/ line.length()
 			);
 	}
+	
+	template<typename PointT>
+    inline double calcSignedShortestDistanceToLine(const PointT& point, const Line<PointT>& line)
+	{
+		return (
+				(line.end.y - line.start.y) * point.x
+				- (line.end.x - line.start.x) * point.y
+				+ line.end.x * line.start.y
+				- line.end.y * line.start.x
+				)
+				/ line.length()
+			;
+	}
 } // namespace GeometricFunctions

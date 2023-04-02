@@ -65,6 +65,7 @@ def generate_launch_description():
             SetRemap(src='~/debug/path/poses', dst='wallfollowing/debug/path/poses'),
             SetRemap(src='~/debug/bounds/left', dst='wallfollowing/debug/bounds/left'),
             SetRemap(src='~/debug/bounds/right', dst='wallfollowing/debug/bounds/right'),
+            SetRemap(src='~/debug/predicted_position', dst='wallfollowing/debug/predicted_position'),
             Node(
                 package='car_simulator',
                 executable='wallfollowing',

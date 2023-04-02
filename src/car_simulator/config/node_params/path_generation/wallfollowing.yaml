@@ -3,7 +3,7 @@
     enable_debug_topics: true
   
     min_scan_time_offset: 0.0001
-    max_path_points: 2           #NOTE: Currently it does not make much sense to havbe more than two path points. But wallfollowing still is written in a way that allows to add more points (but that may lead to strange results, only do after e.g. adjusting how old points are transformed and sorted out.)
+    max_path_points: 2           #NOTE: Currently it does not make much sense to havbe more than two path points. But wallfollowing still is written in a way that allows to add more points (but that may lead to strange results, only do after e.g. adjusting how old points are transformed and sorted out or checking current results.)
     target_method: "CENTER_PATH"
     
     prediction_min_distance: 0.1

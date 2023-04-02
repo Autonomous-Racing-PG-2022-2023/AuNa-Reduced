@@ -178,6 +178,53 @@ std::pair<pcl::Indices, pcl::Indices> WallDetection::addClustersOnRegression(
     return additional_wall_ids;
 }
 
+
+//TODO: Also use this value in other parts like for clustering or in wallfollowing
+//Find track direction. Biggest holes in surrounding
+pcl::PointXYZRGBL WallDetection::getTrackDirection(const pcl::PointCloud<pcl::PointXYZRGBL>::ConstPtr cloud){
+	std::vector<pcl::PointXYZRGBL> sorted_points(cloud->begin(), cloud->end());
+	
+	//Remove all points behind the car
+	//TODO:Maybe also sort out by radius? Currentl not required, but maybe later benefical?
+	sorted_points.erase(std::remove_if(std::execution::par_unseq, sorted_points.begin(), sorted_points.end(), [](const pcl::PointXYZRGBL& point){
+		return (
+			(point.x < 0)
+		);
+	}), sorted_points.end());
+
+	//Sort by angle
+	std::sort(std::execution::par_unseq, sorted_points.begin(), sorted_points.end(), [](const pcl::PointXYZRGBL& a, const pcl::PointXYZRGBL& b){
+		const double yaw_a = std::atan2(a.y, a.x);
+		const double yaw_b = std::atan2(b.y, b.x);
+		
+		return yaw_a < yaw_b;
+	});
+	
+	//Create segments
+	std::vector<std::pair<pcl::PointXYZRGBL, pcl::PointXYZRGBL>> segments(sorted_points.size());
+	std::transform(std::execution::par_unseq, sorted_points.begin(), sorted_points.end() - 1, sorted_points.begin() + 1, segments.begin(), [](const pcl::PointXYZRGBL& start, const pcl::PointXYZRGBL& end){
+		return std::make_pair(start, end);
+	});
+	
+	//Then find segment with most distance between points
+	std::pair<pcl::PointXYZRGBL, pcl::PointXYZRGBL> segment_in_front = *std::max_element(std::execution::par_unseq, segments.begin(), segments.end(), [](const std::pair<pcl::PointXYZRGBL, pcl::PointXYZRGBL>& a, const std::pair<pcl::PointXYZRGBL, pcl::PointXYZRGBL>& b){
+		const double length_a = GeometricFunctions::distance(a.first, a.second);
+		const double length_b = GeometricFunctions::distance(b.first, b.second);
+		
+		return length_a < length_b;
+	});
+	
+	//Calculate it's center to get the track direction
+	const float segment_length = GeometricFunctions::distance(segment_in_front.first, segment_in_front.second);
+	const pcl::PointXYZRGBL center(
+		segment_in_front.second.x - segment_in_front.first.x / segment_length,
+		segment_in_front.second.y - segment_in_front.first.y / segment_length,
+		segment_in_front.second.z - segment_in_front.first.z / segment_length
+	);
+	
+	return center;
+}
+
 int64_t WallDetection::findLargestCluster(
 	const std::unordered_map<uint32_t, pcl::IndicesPtr>& clusters,
     uint32_t ignoreID
@@ -200,9 +247,13 @@ int64_t WallDetection::findLargestCluster(
 std::pair<int64_t, int64_t> WallDetection::determineWallIDs(
 	const pcl::PointCloud<pcl::PointXYZRGBL>::ConstPtr cloud,
     const std::unordered_map<uint32_t, pcl::IndicesPtr>& mapToCheck,
+	const pcl::PointXYZRGBL& track_direction,
 	double radius
 )
 {
+	//Define line that divides track in left and right
+	Line<pcl::PointXYZRGBL> track_line(pcl::PointXYZRGBL(), track_direction);
+	
     double maxRight = 0.0;
     double minLeft = 0.0;
     int64_t maxRightID = -1;
@@ -214,14 +265,16 @@ std::pair<int64_t, int64_t> WallDetection::determineWallIDs(
         {
 			const pcl::PointXYZRGBL& point = cloud->at(itr->second->at(i));
 			
+			const double signed_distance = GeometricFunctions::calcSignedShortestDistanceToLine(point, track_line);
+			
 			if(point.x >= 0 && GeometricFunctions::distance(point, pcl::PointXYZRGBL(0.0f, 0.0f, 0.0f)) <= radius){
-				if (point.y > maxRight)
+				if (signed_distance > maxRight)
 				{
-					maxRight = point.y;
+					maxRight = signed_distance;
 					maxRightID = point.label;
-				}else if (point.y < minLeft)
+				}else if (signed_distance < minLeft)
 				{
-					minLeft = point.y;
+					minLeft = signed_distance;
 					minLeftID = point.label;
 				}
 			}
@@ -709,6 +762,9 @@ void WallDetection::callbackPointCloud(const sensor_msgs::msg::PointCloud2::Cons
 		
 		//Preserve voxel
 		preserveVoxel(cloud_clusters_ptr);
+		
+		//Get Track direction
+		const pcl::PointXYZRGBL track_direction = getTrackDirection(cloud_clusters_ptr);
 
 		std::unordered_map<uint32_t, pcl::IndicesPtr> clustersUsed;
 		// map cluster ids in label to map with cluster id as key and pointvector as value
@@ -725,7 +781,7 @@ void WallDetection::callbackPointCloud(const sensor_msgs::msg::PointCloud2::Cons
 		std::unordered_set<uint32_t> ignoreIDs;
 		if(clustersUsed.size() > 1){
 			// determine maximum left and right clusters in a radius
-			std::pair<int64_t, int64_t> wallIds = determineWallIDs(cloud_clusters_ptr, clustersUsed, wall_radius_); // these ids are the walls
+			std::pair<int64_t, int64_t> wallIds = determineWallIDs(cloud_clusters_ptr, clustersUsed, track_direction, wall_radius_); // these ids are the walls
 
 			if (wallIds.first >= 0 && wallIds.second >= 0 && wallIds.first != wallIds.second)
 			{

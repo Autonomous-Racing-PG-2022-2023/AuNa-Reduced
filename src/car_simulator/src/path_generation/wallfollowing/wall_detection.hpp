@@ -85,8 +85,9 @@ private:
 	bool voxelSearch(pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBL>& octree, const pcl::PointXYZRGBL& voxel, pcl::Indices& points);
 	
 	std::pair<pcl::Indices, pcl::Indices> addClustersOnRegression(const pcl::PointCloud<pcl::PointXYZRGBL>::ConstPtr cloud,  const std::unordered_map<uint32_t, pcl::IndicesPtr>& mapClusters, const std::unordered_set<uint32_t>& inputIgnoreIDs, const pcl::IndicesConstPtr leftWall, const pcl::IndicesConstPtr rightWall);
+	pcl::PointXYZRGBL getTrackDirection(const pcl::PointCloud<pcl::PointXYZRGBL>::ConstPtr cloud);
 	int64_t findLargestCluster(const std::unordered_map<uint32_t, pcl::IndicesPtr>& clusters, uint32_t ignoreID);
-	std::pair<int64_t, int64_t> determineWallIDs(const pcl::PointCloud<pcl::PointXYZRGBL>::ConstPtr cloud, const std::unordered_map<uint32_t, pcl::IndicesPtr>& mapToCheck, double radius);
+	std::pair<int64_t, int64_t> determineWallIDs(const pcl::PointCloud<pcl::PointXYZRGBL>::ConstPtr cloud, const std::unordered_map<uint32_t, pcl::IndicesPtr>& mapToCheck, const pcl::PointXYZRGBL& track_direction, double radius);
 	pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBL> boxing(pcl::PointCloud<pcl::PointXYZRGBL>::Ptr& cloud_in, pcl::PointCloud<pcl::PointXYZRGBL>::Ptr& cloud_out);
 	void classifyVoxels(pcl::PointCloud<pcl::PointXYZRGBL>::Ptr& cloud_in, pcl::PointCloud<pcl::PointXYZRGBL>::Ptr& cloud_out);
 	void preserveVoxel(const pcl::PointCloud<pcl::PointXYZRGBL>::ConstPtr& cloud);

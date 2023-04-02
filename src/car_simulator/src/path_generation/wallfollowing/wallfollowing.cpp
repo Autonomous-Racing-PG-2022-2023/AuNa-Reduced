@@ -114,6 +114,13 @@ Wallfollowing::Wallfollowing()
 		rclcpp::QoS{1}
 	);
 	
+	predicted_position_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>(
+		"~/debug/predicted_position",
+		rclcpp::QoS{1}
+	);
+	
+	
+	
 	//Init path
 	this->path.header.frame_id = frame_id_;
 	this->path.points.emplace_back();//First pose is start pose (origin)
@@ -264,11 +271,19 @@ void Wallfollowing::addPathPoint(const geometry_msgs::msg::PoseStamped& new_pose
 		return;
 	}
 	
+	//Delete all poses, that are not in front of their successor
+	for(size_t i = 1; i < path.points.size(); ++i){
+		if(!isPoseinFront(path.points[i - 1].pose, path.points[i].pose)){
+			path.points.erase(path.points.begin() + i);
+			i--;//Reduce i, so that the i stays the same after loop increment
+		}
+	}
+	
 	//Check if path is behind current vehicle position. If so, discard it
 	if(isPoseinFront(path.points[0].pose, new_pose_transformed.pose)){
-		//Delete all poses, that are not behind the new pose and not in front of the car position
+		//Delete all poses, that are not behind the new pose
 		for(size_t i = 1; i < path.points.size(); ++i){
-			if(!isPoseinFront(path.points[i].pose, new_pose_transformed.pose) || !isPoseinFront(path.points[0].pose, path.points[i].pose)){
+			if(!isPoseinFront(path.points[i].pose, new_pose_transformed.pose)){
 				path.points.erase(path.points.begin() + i);
 				i--;//Reduce i, so that the i stays the same after loop increment
 			}
@@ -388,6 +403,21 @@ void Wallfollowing::setPathBounds(pcl::PointCloud<pcl::PointXYZ>& left_cloud, pc
 		}
 	}
 	
+	//Sort by angle around center (cw for left, ccw for right)
+	std::sort(std::execution::par_unseq, left_hull.begin(), left_hull.end(), [](const convex_hull::point& a, const convex_hull::point& b){
+		const double angle_a = std::atan2(a.y, a.x);
+		const double angle_b = std::atan2(b.y, b.x);
+		
+		return angle_a < angle_b;
+	});
+	
+	std::sort(std::execution::par_unseq, right_hull.begin(), right_hull.end(), [](const convex_hull::point& a, const convex_hull::point& b){
+		const double angle_a = -std::atan2(a.y, a.x);
+		const double angle_b = -std::atan2(b.y, b.x);
+		
+		return angle_a < angle_b;
+	});
+	
 	//Only consider line on the inner side of the track
 	boost::geometry::model::d2::point_xy<float, boost::geometry::cs::cartesian> car_position(0.0, 0.0);
 	
@@ -444,21 +474,6 @@ void Wallfollowing::setPathBounds(pcl::PointCloud<pcl::PointXYZ>& left_cloud, pc
 		return false;
 	}), right_hull.end());
 	
-	//Sort by angle around center (cw for left, ccw for right)
-	std::sort(std::execution::par_unseq, left_hull.begin(), left_hull.end(), [](const convex_hull::point& a, const convex_hull::point& b){
-		const double angle_a = std::atan2(a.y, a.x);
-		const double angle_b = std::atan2(b.y, b.x);
-		
-		return angle_a < angle_b;
-	});
-	
-	std::sort(std::execution::par_unseq, right_hull.begin(), right_hull.end(), [](const convex_hull::point& a, const convex_hull::point& b){
-		const double angle_a = -std::atan2(a.y, a.x);
-		const double angle_b = -std::atan2(b.y, b.x);
-		
-		return angle_a < angle_b;
-	});
-	
 	//Store into path
 	path.left_bound.resize(left_hull.size());
 	std::transform(std::execution::par_unseq, left_hull.begin(), left_hull.end(), path.left_bound.begin(), [&transform](const convex_hull::point& point){
@@ -483,29 +498,20 @@ void Wallfollowing::setPathBounds(pcl::PointCloud<pcl::PointXYZ>& left_cloud, pc
 	});
 }
 
-pcl::PointXYZ Wallfollowing::determinePredictedCarPosition(const std::string& target_frame)
+pcl::PointXYZ Wallfollowing::determinePredictedCarPosition()
 {
 	const autoware_auto_vehicle_msgs::msg::VelocityReport currentVelocityReport = this->velocityReport;//FIXME: Fetch atomically to ensure consistent access
 	const double speed = std::sqrt(currentVelocityReport.lateral_velocity * currentVelocityReport.lateral_velocity + currentVelocityReport.longitudinal_velocity * currentVelocityReport.longitudinal_velocity);
 	
+	//If speed is 0.0 use min distance
 	if(speed > 0.0){
-		geometry_msgs::msg::TransformStamped velocity_transform_msg;
-		try{
-			velocity_transform_msg = tf_buffer_->lookupTransform(target_frame, currentVelocityReport.header.frame_id, tf2::TimePointZero);//FIXME: Check for matching timestamp tf2_ros::fromMsg(t_link.header.stamp));
-		} catch (std::exception& e) {
-			RCLCPP_ERROR(this->get_logger(), "%s", e.what());
-		}
-		tf2::Transform velocity_transform;
-		tf2::fromMsg(velocity_transform_msg.transform, velocity_transform);
-		
+		//Calcule prediction distance and position
 		rclcpp::Duration delta_time = (this->now() - currentVelocityReport.header.stamp) + rclcpp::Duration::from_seconds(prediction_time_);
 		double prediction_distance = std::min(prediction_min_distance_ + speed * delta_time.seconds(), prediction_max_distance_);
 		
-		const tf2::Vector3 predictedCarPositionTransfromed = velocity_transform * (prediction_distance * tf2::Vector3(std::max(0.0f, currentVelocityReport.longitudinal_velocity), currentVelocityReport.lateral_velocity, 0.0).normalize());
-		
 		pcl::PointXYZ ret;
-		ret.x = predictedCarPositionTransfromed.x();
-		ret.y = predictedCarPositionTransfromed.y();
+		ret.x = prediction_distance * std::max(0.0f, currentVelocityReport.longitudinal_velocity) / speed;
+		ret.y = prediction_distance * currentVelocityReport.lateral_velocity / speed;
 		
 		return ret;
 	}else{
@@ -515,6 +521,7 @@ pcl::PointXYZ Wallfollowing::determinePredictedCarPosition(const std::string& ta
 
 pcl::PointXYZ Wallfollowing::determineTargetPathPoint(const pcl::PointCloud<pcl::PointXYZ>& left_cloud, const pcl::PointCloud<pcl::PointXYZ>& right_cloud, const pcl::PointCloud<pcl::PointXYZ>& upper_cloud, pcl::octree::OctreePointCloudSearch<pcl::PointXYZ>& left_octree, pcl::octree::OctreePointCloudSearch<pcl::PointXYZ>& right_octree, const pcl::PointXYZ& initial_predicted_position, double epsilon)
 {
+	//Get new position by bisection
 	const double car_radius = std::max(
 		this->vehicle_info_.front_overhang_m + this->vehicle_info_.wheel_base_m,
 		std::max(
@@ -526,10 +533,11 @@ pcl::PointXYZ Wallfollowing::determineTargetPathPoint(const pcl::PointCloud<pcl:
 		)
 	);
 	
-    double distance = 0.5 * GeometricFunctions::distance(pcl::PointXYZ(), initial_predicted_position);
+    double distance = GeometricFunctions::distance(pcl::PointXYZ(), initial_predicted_position);
     double t = 0.5;
+	double scale = 0.5;
 	//TODO: We can exactly calculate the amount of iterations here. Maybe do that.
-    while (distance > epsilon)
+    while (distance * scale > epsilon)
     {
         const pcl::PointXYZ predicted_position(initial_predicted_position.x * t, initial_predicted_position.y * t, initial_predicted_position.z * t);
 		const std::pair<std::size_t, std::size_t> nearest_points = getNearestPoints(left_octree, right_octree, predicted_position);
@@ -541,15 +549,14 @@ pcl::PointXYZ Wallfollowing::determineTargetPathPoint(const pcl::PointCloud<pcl:
 			|| lineTooCloseToPointcloud(line, left_cloud, car_radius)
 			|| lineTooCloseToPointcloud(line, upper_cloud, car_radius)//TODO: Needed? upper_cloud is always subset of another cloud
 		);
-
-		const double t_multiplier = (too_close ? 0.5 : 1.5);
 		
-		t *= t_multiplier;
-		distance *= 0.5;
+		scale *= 0.5;
+		t += (too_close ? -scale : scale);
     }
     return pcl::PointXYZ(initial_predicted_position.x * t, initial_predicted_position.y * t, initial_predicted_position.z * t);
 }
 
+//TODO:Currently we assume, that the given data is in a coordinate system where x+ is longitudinal_velocity if dorection of driving. We'll need to transform data accordingly to ensure this for different track->header.frame_id (the target frame is the frame of the velocity report currently)
 void Wallfollowing::followWalls(const car_simulator_msgs::msg::Track::ConstSharedPtr track)
 {
 	//Convert message
@@ -571,22 +578,28 @@ void Wallfollowing::followWalls(const car_simulator_msgs::msg::Track::ConstShare
 	right_octree.addPointsFromInputCloud();
 	
 	//Determine predicted car position (based on speed)
-	pcl::PointXYZ predicted_position = determinePredictedCarPosition(this->frame_id_);
+	pcl::PointXYZ predicted_position = determinePredictedCarPosition();
 	
 	//Determine target position by bisection
 	predicted_position = determineTargetPathPoint(*left_cloud, *right_cloud, *upper_cloud, left_octree, right_octree, predicted_position, target_collision_precision_);
 	
-	//Average over time
-	//TODO: Maybe smarter averaging, also taking into account time and distance of average points)
-	predicted_position_average = (predicted_position.y + predicted_position_average * prediction_average_weight_) / (prediction_average_weight_ + 1.0);
-	predicted_position.y = predicted_position_average;
-	
 	//Ensure point if far away enough
+	//NOTE: Must happen before averaging to get the correct direction to movethe point to (averaging changes direction cause it changes the y value only)
 	const double predicted_position_distance = std::sqrt(predicted_position.x * predicted_position.x + predicted_position.y * predicted_position.y);
 	const double predicted_position_new_distance = (std::max(predicted_position_distance, target_min_distance_) / predicted_position_distance);
 	predicted_position.x *= predicted_position_new_distance;
 	predicted_position.y *= predicted_position_new_distance;
 	predicted_position.z *= predicted_position_new_distance;
+	
+	//Average over time
+	//TODO: Maybe smarter averaging, also taking into account time and distance of average points)
+	predicted_position_average = (predicted_position.y + predicted_position_average * prediction_average_weight_) / (prediction_average_weight_ + 1.0);
+	const pcl::PointXYZ predicted_position_after_averaging(predicted_position.x, predicted_position_average, predicted_position.z);
+	const double predicted_position_after_averaging_distance = std::sqrt(predicted_position_after_averaging.x * predicted_position_after_averaging.x + predicted_position_after_averaging.y * predicted_position_after_averaging.y);
+	//Only apply averaging if this doesn't move the point too close to the vehicle
+	if(predicted_position_after_averaging_distance >= target_min_distance_){
+		predicted_position.y = predicted_position_average;
+	}
 	
 	//Put point in center of track
 	const std::pair<std::size_t, std::size_t> nearest_points = getNearestPoints(left_octree, right_octree, predicted_position);
@@ -714,6 +727,23 @@ void Wallfollowing::followWalls(const car_simulator_msgs::msg::Track::ConstShare
 		right_bound_cloud_msg.header = this->path.header;
 		
 		right_bound_pub_->publish(right_bound_cloud_msg);
+		
+		geometry_msgs::msg::PoseStamped predicted_position_pose;
+		predicted_position_pose.header = track->header;
+		predicted_position_pose.pose.position.x = predicted_position.x;
+		predicted_position_pose.pose.position.y = predicted_position.y;
+		predicted_position_pose.pose.position.z = predicted_position.z;
+		predicted_position_pose.pose.orientation = tf2::toMsg(orientation_tf);
+		
+		geometry_msgs::msg::PoseStamped predicted_position_pose_transformed;
+		try{
+			tf2::doTransform(predicted_position_pose, predicted_position_pose_transformed, transform_from_track_msg);
+		} catch (std::exception& e) {
+			RCLCPP_ERROR(this->get_logger(), "%s", e.what());
+			return;
+		}
+		
+		predicted_position_pub_->publish(predicted_position_pose_transformed);
 	}
 }
 

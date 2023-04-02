@@ -143,12 +143,13 @@ void VehicleInterface::callbackOdom(
 
 		/* publish vehicle status twist */
 		{
+			
 			//TODO: Use different message with covariance and with angular and linear velocity
 			autoware_auto_vehicle_msgs::msg::VelocityReport twist;
 			twist.header = header;
 			twist.longitudinal_velocity = odom_ptr_->twist.twist.linear.x;
 			twist.lateral_velocity = odom_ptr_->twist.twist.linear.y;
-			twist.heading_rate = odom_ptr_->twist.twist.linear.z;
+			//FIXME: In rad/s twist.heading_rate = odom_ptr_->twist.twist.linear.z;
 			vehicle_twist_pub_->publish(twist);
 		}
 	}

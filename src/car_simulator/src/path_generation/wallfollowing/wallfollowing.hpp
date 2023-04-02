@@ -65,6 +65,8 @@ private:
 	
 	rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr left_bound_pub_;
 	rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr right_bound_pub_;
+	
+	rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr predicted_position_pub_;
 
 	/* ros param */
 	vehicle_info_util::VehicleInfo vehicle_info_;
@@ -113,7 +115,7 @@ private:
 	void addPathPoint(const geometry_msgs::msg::PoseStamped& new_pose, const geometry_msgs::msg::TransformStamped& transform_msg);
 	void setPathBounds(pcl::PointCloud<pcl::PointXYZ>& left_cloud, pcl::PointCloud<pcl::PointXYZ>& right_cloud, const std::vector<geometry_msgs::msg::Point>& untransformed_path_point_positions, const geometry_msgs::msg::TransformStamped& transform_msg);
 	
-	pcl::PointXYZ determinePredictedCarPosition(const std::string& target_frame);
+	pcl::PointXYZ determinePredictedCarPosition();
 	pcl::PointXYZ determineTargetPathPoint(const pcl::PointCloud<pcl::PointXYZ>& left_cloud, const pcl::PointCloud<pcl::PointXYZ>& right_cloud, const pcl::PointCloud<pcl::PointXYZ>& upper_cloud, pcl::octree::OctreePointCloudSearch<pcl::PointXYZ>& left_octree, pcl::octree::OctreePointCloudSearch<pcl::PointXYZ>& right_octree, const pcl::PointXYZ& initial_predicted_position, double epsilon);
 	
 	void followWalls(const car_simulator_msgs::msg::Track::ConstSharedPtr track);
