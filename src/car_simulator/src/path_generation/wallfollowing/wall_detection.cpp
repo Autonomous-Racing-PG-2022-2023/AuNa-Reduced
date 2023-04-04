@@ -508,47 +508,6 @@ void WallDetection::classifyVoxels(
 	*/
 }
 
-//FIXME: Own octree search, cause existing one does currently not work: https://github.com/PointCloudLibrary/pcl/issues/5637
-bool WallDetection::voxelSearch(pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBL>& octree, const pcl::PointXYZRGBL& voxel, pcl::Indices& points){
-	const double voxel_side_len = this->voxel_size_;
-		
-	double min_x, min_y, min_z, max_x, max_y, max_z;
-	octree.getBoundingBox(min_x, min_y, min_z, max_x, max_y, max_z);
-	
-	for(pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBL>::LeafNodeDepthFirstIterator it =  octree.leaf_depth_begin(); it != octree.leaf_depth_end(); ++it){
-		auto container_points = static_cast<const pcl::octree::OctreeLeafNode<pcl::octree::OctreeContainerPointIndices>*>(*it)->getContainer();
-		
-		const pcl::PointXYZRGBL point_in_voxel = octree.getInputCloud()->at(container_points.getPointIndex());
-		
-		const size_t key_x = static_cast<size_t>((point_in_voxel.x - min_x) / this->voxel_size_);
-		const size_t key_y = static_cast<size_t>((point_in_voxel.y - min_y) / this->voxel_size_);
-		const size_t key_z = static_cast<size_t>((point_in_voxel.z - min_z) / this->voxel_size_);
-
-		Eigen::Vector3f min_bounds;
-		Eigen::Vector3f max_bounds;
-		min_bounds(0) = static_cast<float>(static_cast<double>(key_x) * voxel_side_len + min_x);
-		min_bounds(1) = static_cast<float>(static_cast<double>(key_y) * voxel_side_len + min_y);
-		min_bounds(2) = static_cast<float>(static_cast<double>(key_z) * voxel_side_len +  min_z);
-
-		max_bounds(0) = static_cast<float>(static_cast<double>(key_x + 1) * voxel_side_len + min_x);
-		max_bounds(1) = static_cast<float>(static_cast<double>(key_y + 1) * voxel_side_len + min_y);
-		max_bounds(2) = static_cast<float>(static_cast<double>(key_z + 1) * voxel_side_len + min_z);
-		
-		if(
-			(voxel.x >= min_bounds.x())
-			&& (voxel.y >= min_bounds.y())
-			&& (voxel.z >= min_bounds.z())
-			&& (voxel.x <= max_bounds.x())
-			&& (voxel.y <= max_bounds.y())
-			&& (voxel.z <= max_bounds.z())
-		){
-			container_points.getPointIndices(points);
-			return true;
-		}
-	}
-	return false;
-}
-
 //Preserve voxels, that are not already covered by new voxels and that are not too far away
 //NOTE: We do this after classification sorted out noise
 void WallDetection::preserveVoxel(const pcl::PointCloud<pcl::PointXYZRGBL>::ConstPtr& cloud){
@@ -562,7 +521,7 @@ void WallDetection::preserveVoxel(const pcl::PointCloud<pcl::PointXYZRGBL>::Cons
 		
 		return (
 			(GeometricFunctions::distance(pcl::PointXYZRGBL(0.0f, 0.0f, 0.0f), point) > this->preserved_voxels_radius_)
-			||(voxelSearch(octree, point, points))//(octree.voxelSearch(point, points));
+			||(octree.voxelSearch(point, points))
 		);
 	}), preserved_voxels->end()); 
 	
@@ -589,7 +548,7 @@ void WallDetection::publishObstacles(
 				const pcl::PointXYZRGBL& voxel = cluster_cloud->at(voxel_id);
 				
 				pcl::Indices points;
-				if(!voxelSearch(octree, voxel, points)){//!octree.voxelSearch(voxel, points)){
+				if(!octree.voxelSearch(voxel, points)){
 					RCLCPP_ERROR(this->get_logger(), "Voxel not found");
 				}
 				//Add all points associated with voxel
@@ -644,7 +603,7 @@ void WallDetection::publishTrack(
 	//Put all wall points into output cloud
 	std::for_each(std::execution::seq, cloud_left.begin(), cloud_left.end(), [this, &octree, &input_cloud, &left_cloud_indices](const pcl::PointXYZRGBL& voxel){
 		pcl::Indices points;
-		if(!voxelSearch(octree, voxel, points)){//!octree.voxelSearch(voxel, points)){
+		if(!octree.voxelSearch(voxel, points)){
 			RCLCPP_ERROR(this->get_logger(), "Voxel not found");
 		}
 		
@@ -658,7 +617,7 @@ void WallDetection::publishTrack(
 	});
 	std::for_each(std::execution::seq, cloud_right.begin(), cloud_right.end(), [this, &octree, &input_cloud, &right_cloud_indices](const pcl::PointXYZRGBL& voxel){
 		pcl::Indices points;
-		if(!voxelSearch(octree, voxel, points)){//!octree.voxelSearch(voxel, points)){
+		if(!octree.voxelSearch(voxel, points)){
 			RCLCPP_ERROR(this->get_logger(), "Voxel not found");
 		}
 		
@@ -754,7 +713,7 @@ void WallDetection::callbackPointCloud(const sensor_msgs::msg::PointCloud2::Cons
 		cloud_clusters_ptr->erase(std::remove_if(std::execution::par_unseq, cloud_clusters_ptr->begin(), cloud_clusters_ptr->end(), [this, &octree](pcl::PointXYZRGBL& point){
 			pcl::Indices points;
 			
-			return !voxelSearch(octree, point, points);//!octree.voxelSearch(point, points);
+			return !octree.voxelSearch(point, points);
 		}), cloud_clusters_ptr->end());
 		
 		if(enable_debug_topics_){
