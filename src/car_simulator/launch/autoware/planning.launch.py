@@ -120,8 +120,7 @@ def generate_launch_description():
                     config_file_motion_velocity_smoother,
                     {
                     }
-                ],
-                prefix=['xterm -e gdb -ex run --args']
+                ]
             )
         ]
     )
@@ -132,6 +131,6 @@ def generate_launch_description():
     #ld.add_action(start_autoware_external_velocity_limit_selector_cmd)
     #ld.add_action(start_objects_provider_cmd)
     ld.add_action(start_autoware_obstacle_avoidance_planner_cmd)
-    #ld.add_action(start_autoware_motion_velocity_smoother_cmd)
+    ld.add_action(start_autoware_motion_velocity_smoother_cmd)
 
     return ld

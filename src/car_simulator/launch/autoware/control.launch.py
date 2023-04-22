@@ -42,7 +42,7 @@ def generate_launch_description():
             SetRemap(src='/control/current_gate_mode', dst='control/current_gate_mode'),
             SetRemap(src='kinematics', dst='odom'),
             SetRemap(src='steering', dst='vehicle/status/steering_status'),
-            SetRemap(src='trajectory', dst='obstacle_avoidance_planner/output/path'),
+            SetRemap(src='trajectory', dst='motion_velocity_smoother/output/trajectory'),
             SetRemap(src='is_autonomous_available', dst='control/is_autonomous_available'),
             SetRemap(src='control_mode_request', dst='control/control_mode_request'),
             SetRemap(src='/system/operation_mode/state', dst='system/operation_mode/state'),
@@ -108,7 +108,7 @@ def generate_launch_description():
         actions = [
             remap_tf,
             remap_tf_static,
-            SetRemap(src='~/input/reference_trajectory', dst='obstacle_avoidance_planner/output/path'),
+            SetRemap(src='~/input/reference_trajectory', dst='motion_velocity_smoother/output/trajectory'),
             SetRemap(src='~/input/current_steering', dst='vehicle/status/steering_status'),
             SetRemap(src='~/input/current_odometry', dst='odom'),
             SetRemap(src='~/input/current_accel', dst='vehicle/status/acceleration'),

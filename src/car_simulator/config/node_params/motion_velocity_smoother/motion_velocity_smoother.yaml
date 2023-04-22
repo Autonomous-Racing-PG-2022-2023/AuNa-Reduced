@@ -1,49 +1,97 @@
 /**:
   ros__parameters:
-    max_velocity: 1000.0
-    max_accel: 1000.0
-    min_decel: -500.0
-    max_jerk: 1000.0
-    min_jerk: -500.0
-    margin_to_insert_external_velocity_limit: 0.3
-    max_lateral_accel: 1000.0
-    min_curve_velocity: 0.274
-    decel_distance_before_curve: 0.25
-    decel_distance_after_curve: 0.2
-    min_decel_for_lateral_acc_lim_filter: -250.0
-    replan_vel_deviation: 553.0
-    engage_velocity: 0.0
-    engage_acceleration: 0.0
-    engage_exit_ratio: 1.0
-    stop_dist_to_prohibit_engage: 0.05
-    stopping_velocity: 0.0
-    stopping_distance: 0.0
-    extract_ahead_dist: 20.0
-    extract_behind_dist: 5.0
-    delta_yaw_threshold: 1.0472
-    max_trajectory_length: 20.0
-    min_trajectory_length: 3.0
-    resample_time: 1.0
-    dense_dt: 0.01
-    dense_min_interval_distance: 0.01
-    sparse_dt: 0.05
-    sparse_min_interval_distance: 0.4
-    post_max_trajectory_length: 30.0
-    post_min_trajectory_length: 3.0
-    post_resample_time: 1.0
-    post_dense_dt: 0.01
-    post_dense_min_interval_distance: 0.01
-    post_sparse_dt: 0.01
-    post_sparse_min_interval_distance: 0.1
-    max_steering_angle_rate: 40.0
-    resample_ds: 0.01
-    curvature_threshold: 0.2
-    curvature_calculation_distance: 0.1
-    jerk_weight: 1.0
-    over_v_weight: 10000.0
-    over_a_weight: 5000.0
-    over_j_weight: 100.0
-    over_stop_velocity_warn_thr: 13.89
+
+    # motion state constraints
+    max_velocity: 1000.0    # max velocity limit [m/s]
+
+    max_accel: 1000.0       # Max acceleration limit [m/ss]
+    min_decel: -500.0       # Min deceleration limit [m/ss]
+    max_jerk: 1000.0        # Max jerk limit [m/sss]
+    min_jerk: -500.0        # Min jerk limit [m/sss]
+
+    # curve parameters
+    margin_to_insert_external_velocity_limit: 0.3   #  margin distance to insert external velocity limit [m]
+    max_lateral_accel: 1000.0                       # max lateral acceleration limit [m/ss]
+    min_curve_velocity: 0.274                       # min velocity at lateral acceleration limit [m/ss]
+    decel_distance_before_curve: 0.25               # slow speed distance before a curve for lateral acceleration limit
+    decel_distance_after_curve: 0.2                 # slow speed distance after a curve for lateral acceleration limit
+    min_decel_for_lateral_acc_lim_filter: -250.0    # deceleration limit applied in the lateral acceleration filter to avoid sudden braking [m/ss]
+    
+    # engage & replan parameters
+    replan_vel_deviation: 553.0           # velocity deviation to replan initial velocity [m/s]
+    engage_velocity: 0.0                  # engage velocity threshold [m/s] (if the trajectory velocity is higher than this value, use this velocity for engage vehicle speed)
+    engage_acceleration: 0.0              # engage acceleration [m/ss] (use this acceleration when engagement)
+    engage_exit_ratio: 1.0                # exit engage sequence to normal velocity planning when the velocity exceeds engage_exit_ratio x engage_velocity.
+    stop_dist_to_prohibit_engage: 0.05    # if the stop point is in this distance, the speed is set to 0 not to move the vehicle [m]
+
+    # stop velocity
+    stopping_velocity: 0.0    # change target velocity to this value before v=0 point [m/s]
+    stopping_distance: 0.0    # distance for the stopping_velocity [m]. 0 means the stopping velocity is not applied.
+
+    # path extraction parameters
+    extract_ahead_dist: 20.0      # forward trajectory distance used for planning [m]
+    extract_behind_dist: 5.0      # backward trajectory distance used for planning [m]
+    delta_yaw_threshold: 1.0472   # Allowed delta yaw between ego pose and trajectory pose [radian]
+
+    # resampling parameters for optimization
+    max_trajectory_length: 20.0         # max trajectory length for resampling [m]
+    min_trajectory_length: 3.0          # min trajectory length for resampling [m]
+    resample_time: 1.0                  # resample total time for dense sampling [s]
+    dense_dt: 0.01                      # resample time interval for dense sampling [s]
+    dense_reasmple_dt: 0.01             # resample time interval for dense sampling [s]
+    dense_min_interval_distance: 0.01   # minimum points-interval length for dense sampling [m]
+    sparse_dt: 0.05                     # resample time interval for sparse sampling [s]
+    sparse_min_interval_distance: 0.4   # minimum points-interval length for sparse sampling [m]
+
+    # resampling parameters for post process
+    post_max_trajectory_length: 30.0          # max trajectory length for resampling [m]
+    post_min_trajectory_length: 5.0           # min trajectory length for resampling [m]
+    post_resample_time: 1.0                   # resample total time for dense sampling [s]
+    post_dense_resample_dt: 0.01              # resample time interval for dense sampling [s]
+    post_dense_min_interval_distance: 0.01    # minimum points-interval length for dense sampling [m]
+    post_sparse_resample_dt: 0.01             # resample time interval for sparse sampling [s]
+    post_sparse_min_interval_distance: 0.1    # minimum points-interval length for sparse sampling [m]
+
+    # steering angle rate limit parameters
+    max_steering_angle_rate: 40.0         # maximum steering angle rate [degree/s]
+    resample_ds: 0.01                     # distance between trajectory points [m]
+    curvature_threshold: 0.2              # if curvature > curvature_threshold, steeringRateLimit is triggered [1/m]
+    curvature_calculation_distance: 0.1   # distance of points while curvature is calculating [m]
+
+
+    jerk_weight: 1.0          # weight for "smoothness" cost for jerk
+    pseudo_jerk_weight: 2.0   # weight for "smoothness" cost
+    over_v_weight: 10.0       # weight for "over speed limit" cost
+    over_a_weight: 1.0        # weight for "over accel limit" cost
+    over_j_weight: 100.0      # weight for "over jerk limit" cost
+    
+    # system
+    over_stop_velocity_warn_thr: 13.89    # used to check if the optimization exceeds the input velocity on the stop point
     
     ego_nearest_dist_threshold: 1.0
     ego_nearest_yaw_threshold: 1.0
+
+    algorithm_type: "Linf"    # "JerkFiltered", "L2" or "Linf"
+
+    jerk_filter_ds: 0.1   # resampling ds for jerk filter
+
+    # constraints param for normal driving
+    normal:
+      min_acc: -1.5         # min deceleration [m/ss]
+      max_acc: 1.0          # max acceleration [m/ss]
+      min_jerk: -0.5        # min jerk [m/sss]
+      max_jerk: 1.0         # max jerk [m/sss]
+
+    # constraints to be observed
+    limit:
+      min_acc: -2.5         # min deceleration limit [m/ss]
+      max_acc: 1.0          # max acceleration limit [m/ss]
+      min_jerk: -1.5        # min jerk limit [m/sss]
+      max_jerk: 1.5         # max jerk limit [m/sss]
+
+    stop_decel: 0.0         # deceleration at a stop point[m/ss]
+
+    dense_resample_dt: 0.02              # resample time interval for dense sampling [s]
+    sparse_resample_dt: 0.05             # resample time interval for sparse sampling [s]
+
+    publish_debug_trajs: false
