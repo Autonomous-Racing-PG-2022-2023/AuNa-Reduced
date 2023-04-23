@@ -22,7 +22,7 @@ Panels:
         - /PointCloud22
         - /MarkerArray1
         - /PoseArray1
-      Splitter Ratio: 0.5
+      Splitter Ratio: 0.4959568679332733
     Tree Height: 670
   - Class: rviz_plugins/ManualController
     Name: ManualController
@@ -79,13 +79,7 @@ Visualization Manager:
         All Enabled: true
         base_link:
           Value: true
-        camera:
-          Value: true
         chassis:
-          Value: true
-        imu_link:
-          Value: true
-        laser:
           Value: true
         left_steering:
           Value: true
@@ -105,13 +99,7 @@ Visualization Manager:
           Value: true
         robot/base_link:
           Value: true
-        robot/camera:
-          Value: true
         robot/chassis:
-          Value: true
-        robot/imu_link:
-          Value: true
-        robot/laser:
           Value: true
         robot/left_steering:
           Value: true
@@ -141,41 +129,8 @@ Visualization Manager:
           robot/odom:
             odom:
               {}
-        robot/base_link:
-          base_link:
-            {}
-          robot/chassis:
-            chassis:
-              {}
-            robot/camera:
-              camera:
-                {}
-            robot/imu_link:
-              imu_link:
-                {}
-            robot/laser:
-              laser:
-                {}
-            robot/left_steering:
-              left_steering:
-                {}
-              robot/left_wheel_front:
-                left_wheel_front:
-                  {}
-            robot/left_wheel_back:
-              left_wheel_back:
-                {}
-            robot/right_steering:
-              right_steering:
-                {}
-              robot/right_wheel_front:
-                right_wheel_front:
-                  {}
-            robot/right_wheel_back:
-              right_wheel_back:
-                {}
-            robot/steering_wheel:
-              steering_wheel:
+            robot/base_link:
+              base_link:
                 {}
       Update Interval: 0
       Value: true
@@ -209,7 +164,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Best Effort
-        Value: /robot/laser/out
+        Value: <robot_namespace>laser/out
       Use Fixed Frame: true
       Use rainbow: true
       Value: false
@@ -283,7 +238,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot/wallfollowing/output/path
+        Value: <robot_namespace>wallfollowing/output/path
       Value: false
       View Drivable Area:
         Alpha: 0.9990000128746033
@@ -329,7 +284,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot/obstacle_avoidance_planner/output/path
+        Value: <robot_namespace>motion_velocity_smoother/output/trajectory
       Value: true
       View Footprint:
         Alpha: 1
@@ -453,7 +408,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot/wall_detection/output/track
+        Value: <robot_namespace>wall_detection/output/track
       Upper Circle:
         Alpha: 0.30000001192092896
         Class: ""
@@ -522,7 +477,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot/wall_detection/debug/voxels
+        Value: <robot_namespace>wall_detection/debug/voxels
       Use Fixed Frame: true
       Use rainbow: true
       Value: false
@@ -556,7 +511,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot/wall_detection/debug/clusters
+        Value: <robot_namespace>wall_detection/debug/clusters
       Use Fixed Frame: true
       Use rainbow: true
       Value: false
@@ -570,7 +525,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot/obstacle_avoidance_planner/virtual_wall
+        Value: <robot_namespace>obstacle_avoidance_planner/virtual_wall
       Value: false
     - Class: rviz_default_plugins/MarkerArray
       Enabled: false
@@ -582,7 +537,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot/obstacle_avoidance_planner/debug/marker
+        Value: <robot_namespace>/obstacle_avoidance_planner/debug/marker
       Value: false
     - Alpha: 1
       Arrow Length: 0.30000001192092896
@@ -603,7 +558,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot/wallfollowing/debug/path/poses
+        Value: <robot_namespace>/wallfollowing/debug/path/poses
       Value: false
   Enabled: true
   Global Options:
@@ -626,7 +581,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 3.548952579498291
+      Distance: 8.32225227355957
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -658,5 +613,5 @@ Window Geometry:
     collapsed: false
   QMainWindow State: 000000ff00000000fd000000010000000000000175000004b1fc0200000004fb000000100044006900730070006c006100790073010000002e000003210000009b00fffffffb0000001e005200650061006c00730065006e0073006500430061006d0065007200610000000000ffffffff0000000000000000fb00000020004d0061006e00750061006c0043006f006e00740072006f006c006c0065007201000003530000006c0000006c00fffffffb00000024004100750074006f00770061007200650053007400610074006500500061006e0065006c01000003c30000011c0000011c00ffffff0000083f000004b100000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Width: 2488
-  X: 105
-  Y: 116
+  X: 131
+  Y: 149
