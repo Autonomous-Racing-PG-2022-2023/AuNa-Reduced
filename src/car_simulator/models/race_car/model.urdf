@@ -8,10 +8,10 @@
   <xacro:property name="cameraSizeL" value="0.03"/>
   <xacro:property name="cameraSizeB" value="0.03"/>
   <xacro:property name="cameraSizeH" value="0.17"/>
-  <xacro:property name="cameraMass" value="0.1"/>
+  <xacro:property name="cameraMass" value="0.5"/>
 
   <xacro:property name="hokuyoSize" value="0.1"/>
-  <xacro:property name="hokuyoMass" value="0.1"/>
+  <xacro:property name="hokuyoMass" value="0.5"/>
 
   <xacro:property name="bodySizeL" value="0.49"/>
   <xacro:property name="bodySizeB" value="0.18"/>
