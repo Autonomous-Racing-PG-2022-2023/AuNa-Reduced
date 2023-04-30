@@ -537,7 +537,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: <robot_namespace>/obstacle_avoidance_planner/debug/marker
+        Value: <robot_namespace>obstacle_avoidance_planner/debug/marker
       Value: false
     - Alpha: 1
       Arrow Length: 0.30000001192092896
@@ -558,7 +558,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: <robot_namespace>/wallfollowing/debug/path/poses
+        Value: <robot_namespace>wallfollowing/debug/path/poses
       Value: false
   Enabled: true
   Global Options:

@@ -2,7 +2,7 @@
   ros__parameters:
 
     # motion state constraints
-    max_velocity: 1000.0    # max velocity limit [m/s]
+    max_velocity: 10.0    # max velocity limit [m/s]
 
     max_accel: 1000.0       # Max acceleration limit [m/ss]
     min_decel: -500.0       # Min deceleration limit [m/ss]
@@ -11,8 +11,8 @@
 
     # curve parameters
     margin_to_insert_external_velocity_limit: 0.3   #  margin distance to insert external velocity limit [m]
-    max_lateral_accel: 1000.0                       # max lateral acceleration limit [m/ss]
-    min_curve_velocity: 0.274                       # min velocity at lateral acceleration limit [m/ss]
+    max_lateral_accel: 0.5                      # max lateral acceleration limit [m/ss]
+    min_curve_velocity: 0.0                       # min velocity at lateral acceleration limit [m/ss]
     decel_distance_before_curve: 0.25               # slow speed distance before a curve for lateral acceleration limit
     decel_distance_after_curve: 0.2                 # slow speed distance after a curve for lateral acceleration limit
     min_decel_for_lateral_acc_lim_filter: -250.0    # deceleration limit applied in the lateral acceleration filter to avoid sudden braking [m/ss]
@@ -37,24 +37,24 @@
     max_trajectory_length: 20.0         # max trajectory length for resampling [m]
     min_trajectory_length: 3.0          # min trajectory length for resampling [m]
     resample_time: 1.0                  # resample total time for dense sampling [s]
-    dense_dt: 0.01                      # resample time interval for dense sampling [s]
-    dense_reasmple_dt: 0.01             # resample time interval for dense sampling [s]
-    dense_min_interval_distance: 0.01   # minimum points-interval length for dense sampling [m]
-    sparse_dt: 0.05                     # resample time interval for sparse sampling [s]
+    dense_dt: 0.1                      # resample time interval for dense sampling [s]
+    dense_reasmple_dt: 0.1             # resample time interval for dense sampling [s]
+    dense_min_interval_distance: 0.1   # minimum points-interval length for dense sampling [m]
+    sparse_dt: 0.5                     # resample time interval for sparse sampling [s]
     sparse_min_interval_distance: 0.4   # minimum points-interval length for sparse sampling [m]
 
     # resampling parameters for post process
     post_max_trajectory_length: 30.0          # max trajectory length for resampling [m]
     post_min_trajectory_length: 5.0           # min trajectory length for resampling [m]
     post_resample_time: 1.0                   # resample total time for dense sampling [s]
-    post_dense_resample_dt: 0.01              # resample time interval for dense sampling [s]
-    post_dense_min_interval_distance: 0.01    # minimum points-interval length for dense sampling [m]
-    post_sparse_resample_dt: 0.01             # resample time interval for sparse sampling [s]
+    post_dense_resample_dt: 0.1              # resample time interval for dense sampling [s]
+    post_dense_min_interval_distance: 0.1    # minimum points-interval length for dense sampling [m]
+    post_sparse_resample_dt: 0.5             # resample time interval for sparse sampling [s]
     post_sparse_min_interval_distance: 0.1    # minimum points-interval length for sparse sampling [m]
 
     # steering angle rate limit parameters
     max_steering_angle_rate: 40.0         # maximum steering angle rate [degree/s]
-    resample_ds: 0.01                     # distance between trajectory points [m]
+    resample_ds: 0.1                     # distance between trajectory points [m]
     curvature_threshold: 0.2              # if curvature > curvature_threshold, steeringRateLimit is triggered [1/m]
     curvature_calculation_distance: 0.1   # distance of points while curvature is calculating [m]
 
