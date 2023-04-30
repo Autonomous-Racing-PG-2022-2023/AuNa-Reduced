@@ -88,7 +88,7 @@ ___
 
 After building the package, the currently implemented scenarios can be found in */src/car_simulator/launch/scenarios*. The multi-robot navigation scenario can be launched as follows:
 
-    ros2 launch car_simulator scenario_single_robot_racetrack.launch.py
+    ros2 launch car_simulator scenario_robot_racetrack.launch.py robot_number:=4
     
 Make the car drive using:
     

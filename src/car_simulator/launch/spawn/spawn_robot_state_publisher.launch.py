@@ -55,6 +55,7 @@ def generate_launch_description():
         namespace=namespace,
         output='screen',
         parameters=[
+            #Robot description is return value of calling xacro with our model
             {'robot_description': Command([
                 'xacro ', model, 
                 ' namespace:=', urdf_namespace])},

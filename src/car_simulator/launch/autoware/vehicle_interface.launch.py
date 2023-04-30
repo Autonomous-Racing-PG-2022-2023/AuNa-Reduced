@@ -18,23 +18,6 @@ def generate_launch_description():
     base_frame_id = LaunchConfiguration('base_frame_id', default=[namespace, 'base_link']);
     steering_frame_id = LaunchConfiguration('steering_frame_id', default=[namespace, 'left_steering']);
     
-    # Launch Arguments
-    namespace_arg = DeclareLaunchArgument(
-        name='namespace',
-        default_value='',
-        description='Robot namespace'
-    )
-    base_frame_id_arg = DeclareLaunchArgument(
-        'base_frame_id',
-        default_value=[namespace, 'base_link'],
-        description='base_frame of the robot'
-    )
-    steering_frame_id_arg = DeclareLaunchArgument(
-        'steering_frame_id',
-        default_value=[namespace, 'left_steering'],
-        description='steering_frame of the robot'
-    )
-    
     # Nodes and other launch files
     remap_tf = SetRemap(src='/tf', dst='autoware/tf');
     remap_tf_static = SetRemap(src='/tf_static', dst='autoware/tf_static');
@@ -70,10 +53,6 @@ def generate_launch_description():
 
     # Launch Description
     ld = LaunchDescription()
-    
-    ld.add_action(namespace_arg)
-    ld.add_action(base_frame_id_arg)
-    ld.add_action(steering_frame_id_arg)
 
     ld.add_action(start_vehicle_interface_cmd)
 
