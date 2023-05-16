@@ -57,7 +57,7 @@ find_package(Boost REQUIRED)
 find_package(car_simulator_msgs REQUIRED)
 
 add_executable(localization_pose src/transformations/localization_pose.cpp)
-ament_target_dependencies(localization_pose rclcpp std_msgs geometry_msgs nav_msgs tf2_ros tf2_kdl)
+ament_target_dependencies(localization_pose rclcpp std_msgs tf2_geometry_msgs geometry_msgs nav_msgs tf2_ros tf2_kdl)
 
 add_executable(simulation_pose src/transformations/simulation_pose.cpp)
 ament_target_dependencies(simulation_pose rclcpp std_msgs geometry_msgs nav_msgs gazebo_msgs ros_its_msgs)
