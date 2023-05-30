@@ -11,7 +11,7 @@ int main(int argc, char** argv)
 	while (rclcpp::ok()) {
 		auto message = std_msgs::msg::String();
 		message.data = "What do we need to publish? " + std::to_string(count);
-		RCLCPP_INFO(node->get_logger(), "Test: published : '%s'", message.data.c_str());
+		RCLCPP_INFO(node->get_logger(), "published : '%s'", message.data.c_str());
 		publisher->publish(message);
 		rclcpp::spin_some(node);
 		loop_rate.sleep();
