@@ -58,7 +58,7 @@ public:
 
 		subscription_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
 			src_topic_,
-			10,
+			rclcpp::QoS{10}.best_effort(),
 			std::bind(&LaserToPointcloud::scanCallback, this, std::placeholders::_1)
 		);
 		

@@ -57,10 +57,10 @@ VehicleInterface::VehicleInterface()
 		rclcpp::QoS{1},
 		std::bind(&VehicleInterface::callbackOdom, this, _1)
 	);
-	
+
 	imu_sub_ = create_subscription<sensor_msgs::msg::Imu>(
 		"~/imu",
-		rclcpp::QoS{1},
+		rclcpp::QoS{1}.best_effort(),
 		std::bind(&VehicleInterface::callbackImu, this, _1)
 	);
 	
