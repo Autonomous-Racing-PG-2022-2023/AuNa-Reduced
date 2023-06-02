@@ -15,7 +15,7 @@ Wallfollowing::Wallfollowing()
 : Node("wallfollowing"), vehicle_info_(vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo()), last_scan_time(this->now())
 {
 	/* setup parameters */
-	enable_debug_topics_ = declare_parameter<bool>("enable_debug_topics", false);
+	enable_debug_topics_ = declare_parameter<bool>("enable_debug_topics", true);
 	
 	frame_id_ = declare_parameter("frame_id", "map");
 	min_scan_time_offset_ = declare_parameter<double>("min_scan_time_offset", 0.0001);
@@ -36,7 +36,7 @@ Wallfollowing::Wallfollowing()
 	prediction_time_ = declare_parameter<double>("prediction_time", 0.01);
 	prediction_average_weight_ = declare_parameter<double>("prediction_average_weight", 5.0);
 	target_min_distance_ = declare_parameter<double>("target_min_distance", 0.3);
-	target_collision_precision_ = declare_parameter<double>("target_collision_precision", 0.01);
+	target_collision_precision_ = declare_parameter<double>("target_collision_precision", 0.05);
 	max_yaw_deviation_ = declare_parameter<double>("max_yaw_deviation", 0.7);
 	
 	stop_detection_speed_threshold_ = declare_parameter<double>("stop_detection_speed_threshold", 0.1);
@@ -508,7 +508,7 @@ pcl::PointXYZ Wallfollowing::determinePredictedCarPosition()
 	
 	//If speed is 0.0 use min distance
 	if(speed > stop_detection_speed_threshold_){
-		//Calcule prediction distance and position
+		//Calculate prediction distance and position
 		rclcpp::Duration delta_time = (this->now() - currentVelocityReport.header.stamp) + rclcpp::Duration::from_seconds(prediction_time_);
 		double prediction_distance = std::min(prediction_min_distance_ + speed * delta_time.seconds(), prediction_max_distance_);
 		
@@ -522,7 +522,15 @@ pcl::PointXYZ Wallfollowing::determinePredictedCarPosition()
 	}
 }
 
-pcl::PointXYZ Wallfollowing::determineTargetPathPoint(const pcl::PointCloud<pcl::PointXYZ>& left_cloud, const pcl::PointCloud<pcl::PointXYZ>& right_cloud, const pcl::PointCloud<pcl::PointXYZ>& upper_cloud, pcl::octree::OctreePointCloudSearch<pcl::PointXYZ>& left_octree, pcl::octree::OctreePointCloudSearch<pcl::PointXYZ>& right_octree, const pcl::PointXYZ& initial_predicted_position, double epsilon)
+pcl::PointXYZ Wallfollowing::determineTargetPathPoint(
+	const pcl::PointCloud<pcl::PointXYZ>& left_cloud, 
+	const pcl::PointCloud<pcl::PointXYZ>& right_cloud, 
+	const pcl::PointCloud<pcl::PointXYZ>& upper_cloud, 
+	pcl::octree::OctreePointCloudSearch<pcl::PointXYZ>& left_octree, 
+	pcl::octree::OctreePointCloudSearch<pcl::PointXYZ>& right_octree, 
+	const pcl::PointXYZ& initial_predicted_position, 
+	double epsilon
+)
 {
 	//Get new position by bisection
 	const double car_radius = std::max(
@@ -537,15 +545,15 @@ pcl::PointXYZ Wallfollowing::determineTargetPathPoint(const pcl::PointCloud<pcl:
 	);
 	
     double distance = GeometricFunctions::distance(pcl::PointXYZ(), initial_predicted_position);
-    double t = 0.5;
+    double t = 0.75;
 	double scale = 0.5;
 	//TODO: We can exactly calculate the amount of iterations here. Maybe do that.
-    while (distance * scale > epsilon)
+    while (distance * scale > epsilon && t < 1)
     {
-        const pcl::PointXYZ predicted_position(initial_predicted_position.x * t, initial_predicted_position.y * t, initial_predicted_position.z * t);
+		const pcl::PointXYZ predicted_position(initial_predicted_position.x * t, initial_predicted_position.y * t, initial_predicted_position.z * t);
 		const std::pair<std::size_t, std::size_t> nearest_points = getNearestPoints(left_octree, right_octree, predicted_position);
-        const pcl::PointXYZ center_point = determineTrackCenter(left_cloud.at(nearest_points.first), right_cloud.at(nearest_points.second), pcl::PointXYZ(), max_yaw_deviation_);
-        Line<pcl::PointXYZ> line(pcl::PointXYZ(), center_point);
+		const pcl::PointXYZ center_point = determineTrackCenter(left_cloud.at(nearest_points.first), right_cloud.at(nearest_points.second), pcl::PointXYZ(), max_yaw_deviation_);
+		Line<pcl::PointXYZ> line(pcl::PointXYZ(), center_point);
 
         const bool too_close = (
 			   lineTooCloseToPointcloud(line, right_cloud, car_radius)
@@ -556,6 +564,10 @@ pcl::PointXYZ Wallfollowing::determineTargetPathPoint(const pcl::PointCloud<pcl:
 		scale *= 0.5;
 		t += (too_close ? -scale : scale);
     }
+
+	// upper limit
+	if (t > 1) t = 1;
+
     return pcl::PointXYZ(initial_predicted_position.x * t, initial_predicted_position.y * t, initial_predicted_position.z * t);
 }
 
@@ -586,8 +598,8 @@ void Wallfollowing::followWalls(const car_simulator_msgs::msg::Track::ConstShare
 	//Determine target position by bisection
 	predicted_position = determineTargetPathPoint(*left_cloud, *right_cloud, *upper_cloud, left_octree, right_octree, predicted_position, target_collision_precision_);
 	
-	//Ensure point if far away enough
-	//NOTE: Must happen before averaging to get the correct direction to movethe point to (averaging changes direction cause it changes the y value only)
+	//Ensure point if far enough away
+	//NOTE: Must happen before averaging to get the correct direction to move the point to (averaging changes direction cause it changes the y value only)
 	const double predicted_position_distance = std::sqrt(predicted_position.x * predicted_position.x + predicted_position.y * predicted_position.y);
 	const double predicted_position_new_distance = (std::max(predicted_position_distance, target_min_distance_) / predicted_position_distance);
 	predicted_position.x *= predicted_position_new_distance;
@@ -595,7 +607,7 @@ void Wallfollowing::followWalls(const car_simulator_msgs::msg::Track::ConstShare
 	predicted_position.z *= predicted_position_new_distance;
 	
 	//Average over time
-	//TODO: Maybe smarter averaging, also taking into account time and distance of average points)
+	//TODO: Maybe smarter averaging (also taking into account time and distance of average points)
 	predicted_position_average = (predicted_position.y + predicted_position_average * prediction_average_weight_) / (prediction_average_weight_ + 1.0);
 	const pcl::PointXYZ predicted_position_after_averaging(predicted_position.x, predicted_position_average, predicted_position.z);
 	const double predicted_position_after_averaging_distance = std::sqrt(predicted_position_after_averaging.x * predicted_position_after_averaging.x + predicted_position_after_averaging.y * predicted_position_after_averaging.y);
