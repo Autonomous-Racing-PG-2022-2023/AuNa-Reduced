@@ -40,6 +40,7 @@ def launch_actions(context: LaunchContext):
     lidarslam_file_dir = os.path.join(pkg_dir, 'launch', 'lidarslam')
     path_generation_file_dir = os.path.join(pkg_dir, 'launch', 'path_generation')
     rviz_file_dir = os.path.join(pkg_dir, 'launch', 'rviz')
+    communication_launch_file_dir = os.path.join(pkg_dir, 'launch', 'communication')
 
     # Launch Argument Configurations
     robot_number = LaunchConfiguration('robot_number', default='1')
@@ -151,6 +152,12 @@ def launch_actions(context: LaunchContext):
             launch_arguments={
             }.items(),
         )
+
+        communicaton_launch_cmd = IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(os.path.join(communication_launch_file_dir, 'communication.launch.py')),
+                launch_arguments = {        
+                }.items(),
+        )
         
         cmds.append(spawn_cmd);
         cmds.append(tf_remap_cmd);
@@ -166,6 +173,7 @@ def launch_actions(context: LaunchContext):
         cmds.append(control_cmd);
         cmds.append(system_cmd);
         cmds.append(rviz_cmd);
+        cmds.append(communicaton_launch_cmd);
 
     return cmds
 

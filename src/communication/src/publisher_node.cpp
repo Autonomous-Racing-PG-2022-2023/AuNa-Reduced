@@ -6,7 +6,7 @@ int main(int argc, char** argv)
 	rclcpp::init(argc, argv);
 	auto node = rclcpp::Node::make_shared("publisher_node");
 	auto publisher = node->create_publisher<std_msgs::msg::String>("topic", 10);
-	rclcpp::WallRate loop_rate(2);
+	rclcpp::WallRate loop_rate(0.2); // 0.2 Hz (every 5 seconds)
 	int count = 0;
 	while (rclcpp::ok()) {
 		auto message = std_msgs::msg::String();
