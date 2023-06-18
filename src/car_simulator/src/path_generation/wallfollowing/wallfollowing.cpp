@@ -15,7 +15,7 @@ Wallfollowing::Wallfollowing()
 : Node("wallfollowing"), vehicle_info_(vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo()), last_scan_time(this->now())
 {
 	/* setup parameters */
-	enable_debug_topics_ = declare_parameter<bool>("enable_debug_topics", true);
+	enable_debug_topics_ = declare_parameter<bool>("enable_debug_topics", false);
 	
 	frame_id_ = declare_parameter("frame_id", "map");
 	min_scan_time_offset_ = declare_parameter<double>("min_scan_time_offset", 0.0001);
@@ -36,7 +36,7 @@ Wallfollowing::Wallfollowing()
 	prediction_time_ = declare_parameter<double>("prediction_time", 0.01);
 	prediction_average_weight_ = declare_parameter<double>("prediction_average_weight", 5.0);
 	target_min_distance_ = declare_parameter<double>("target_min_distance", 0.3);
-	target_collision_precision_ = declare_parameter<double>("target_collision_precision", 0.05);
+	target_collision_precision_ = declare_parameter<double>("target_collision_precision", 0.01);
 	max_yaw_deviation_ = declare_parameter<double>("max_yaw_deviation", 0.7);
 	
 	stop_detection_speed_threshold_ = declare_parameter<double>("stop_detection_speed_threshold", 0.1);
@@ -545,10 +545,10 @@ pcl::PointXYZ Wallfollowing::determineTargetPathPoint(
 	);
 	
     double distance = GeometricFunctions::distance(pcl::PointXYZ(), initial_predicted_position);
-    double t = 0.75;
+    double t = 0.5;
 	double scale = 0.5;
 	//TODO: We can exactly calculate the amount of iterations here. Maybe do that.
-    while (distance * scale > epsilon && t < 1)
+    while (distance * scale > epsilon)
     {
 		const pcl::PointXYZ predicted_position(initial_predicted_position.x * t, initial_predicted_position.y * t, initial_predicted_position.z * t);
 		const std::pair<std::size_t, std::size_t> nearest_points = getNearestPoints(left_octree, right_octree, predicted_position);
@@ -564,9 +564,6 @@ pcl::PointXYZ Wallfollowing::determineTargetPathPoint(
 		scale *= 0.5;
 		t += (too_close ? -scale : scale);
     }
-
-	// upper limit
-	if (t > 1) t = 1;
 
     return pcl::PointXYZ(initial_predicted_position.x * t, initial_predicted_position.y * t, initial_predicted_position.z * t);
 }
