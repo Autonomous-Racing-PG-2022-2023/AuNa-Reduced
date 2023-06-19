@@ -59,6 +59,8 @@ def launch_actions(context: LaunchContext):
             }
         )
     
+    context.launch_configurations['robots'] = robots
+
     cmds = []
     for robot in robots:
         spawn_cmd = IncludeLaunchDescription(
@@ -155,7 +157,10 @@ def launch_actions(context: LaunchContext):
 
         communicaton_launch_cmd = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(os.path.join(communication_launch_file_dir, 'communication.launch.py')),
-                launch_arguments = {        
+                launch_arguments = {
+                    'robot_number': robot_number,
+                    'name': robot['name']
+
                 }.items(),
         )
         

@@ -11,19 +11,24 @@ def generate_launch_description():
     pkg_dir = get_package_share_directory('car_simulator')
 
     namespace = LaunchConfiguration('namespace', default='')
+    robot_number = LaunchConfiguration('robot_number')
+    robot_name = LaunchConfiguration('name')
 
     start_publisher_node_cmd = Node(
             package = 'communication',
             executable = 'publisher_node',
             name = 'publisher_node',
-            output = 'screen'
+            output = 'screen',
+            arguments = [robot_number]
             )
 
     start_subscriber_node_cmd = Node(
             package = 'communication',
             executable = 'subscriber_node',
             name = 'subscriber_node', 
-            output = 'screen'
+            output = 'screen',
+            namespace = namespace,
+            arguments = [robot_name]
             )
 
     ld = LaunchDescription()

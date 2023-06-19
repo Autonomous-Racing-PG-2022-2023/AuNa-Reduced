@@ -9,7 +9,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
-
+find_package(autoware_auto_vehicle_msgs REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
@@ -26,7 +26,7 @@ if(BUILD_TESTING)
 endif()
 
 add_executable(publisher_node src/publisher_node.cpp)
-ament_target_dependencies(publisher_node rclcpp std_msgs)
+ament_target_dependencies(publisher_node rclcpp std_msgs autoware_auto_vehicle_msgs)
 
 add_executable(subscriber_node src/subscriber_node.cpp)
 ament_target_dependencies(subscriber_node rclcpp std_msgs)
