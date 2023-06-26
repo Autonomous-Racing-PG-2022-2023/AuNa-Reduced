@@ -62,6 +62,8 @@
     jerk_weight: 1.0          # weight for "smoothness" cost for jerk
     pseudo_jerk_weight: 1.0   # weight for "smoothness" cost
     over_v_weight: 2.0       # weight for "over speed limit" cost
+    pseudo_jerk_weight: 2.0   # weight for "smoothness" cost
+    over_v_weight: 5.0       # weight for "over speed limit" cost
     over_a_weight: 1.0        # weight for "over accel limit" cost
     over_j_weight: 1.0      # weight for "over jerk limit" cost
     
