@@ -24,6 +24,7 @@ from launch.launch_context import LaunchContext
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, TextSubstitution
 from car_simulator import yaml_launch
+import uuid
 
 def launch_actions(context: LaunchContext):
 
@@ -49,10 +50,11 @@ def launch_actions(context: LaunchContext):
     # Nodes and other launch files
     robots = []
     for num in range(int(robot_number.perform(context))):
+        robot_name = 'robot' + str(uuid.uuid4().int)
         robots.append(
             {
-                'name': 'robot'+str(num), 
-                'namespace': 'robot'+str(num), 
+                'name': robot_name, 
+                'namespace': robot_name, 
                 'x_pose': yaml_launch.get_yaml_value("map_params", world_name.perform(context), ["spawn","offset","x"]) + num * yaml_launch.get_yaml_value("map_params", world_name.perform(context), ["spawn","linear","x"]),
                 'y_pose': yaml_launch.get_yaml_value("map_params", world_name.perform(context), ["spawn","offset","y"]) + num * yaml_launch.get_yaml_value("map_params", world_name.perform(context), ["spawn","linear","y"]),
                 'z_pose': yaml_launch.get_yaml_value("map_params", world_name.perform(context), ["spawn","offset","z"]) + num * yaml_launch.get_yaml_value("map_params", world_name.perform(context), ["spawn","linear","z"]),

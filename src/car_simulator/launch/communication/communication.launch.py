@@ -19,7 +19,8 @@ def generate_launch_description():
             executable = 'publisher_node',
             name = 'publisher_node',
             output = 'screen',
-            arguments = [robot_number]
+            namespace = namespace,
+            arguments = [robot_number, robot_name]
             )
 
     start_subscriber_node_cmd = Node(
