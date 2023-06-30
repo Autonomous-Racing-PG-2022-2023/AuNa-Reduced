@@ -17,10 +17,10 @@
   <xacro:property name="hokuyoMass" value="0.5"/>
 
   <!-- chassis params -->
-  <xacro:property name="bodySizeL" value="0.535"/>
-  <xacro:property name="bodySizeB" value="0.295"/>
-  <xacro:property name="bodySizeH" value="0.215"/>
-  <xacro:property name="bodyMass" value="0.7"/>  <!-- 2,5kg measured minus the parts on the car -->
+  <xacro:property name="bodySizeL" value="0.49"/>
+  <xacro:property name="bodySizeB" value="0.18"/>
+  <xacro:property name="bodySizeH" value="0.1"/>
+  <xacro:property name="bodyMass" value="3.5"/>  <!-- 2,5kg measured minus the parts on the car -->
 
   <!-- Wheel params -->
   <xacro:property name="wheel_radius" value="0.055" /> 
