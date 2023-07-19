@@ -78,14 +78,14 @@ public:
             tf2_msgs::msg::TFMessage message;
             geometry_msgs::msg::TransformStamped t;
             t.header.frame_id = frame_id_;
-            t.header.stamp = this->get_clock()->now();;
+            t.header.stamp = this->get_clock()->now();
             t.child_frame_id = child_frame_id_;
             
             t.transform.translation.x = translation_x_;
-            t.transform.translation.y = translation_x_;
-            t.transform.translation.z = translation_x_;
+            t.transform.translation.y = translation_y_;
+            t.transform.translation.z = translation_z_;
             t.transform.rotation = tf2::Quaternion(yaw_, pitch_, roll_);
-            message.transforms.push_back(t)
+            message.transforms.push_back(t);
 
             sendStaticTransform(message);
             rclcpp::shutdown();
