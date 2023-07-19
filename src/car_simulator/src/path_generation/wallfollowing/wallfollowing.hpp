@@ -108,6 +108,7 @@ private:
 	bool isPoseinFront(const geometry_msgs::msg::Pose& reference_pose, const geometry_msgs::msg::Pose& current_pose);
 	std::vector<convex_hull::point> getConvexHull2D(const pcl::PointCloud<pcl::PointXYZ>& cloud);
 	std::vector<convex_hull::point> getConvexHull2D(const std::vector<convex_hull::point>& points);
+	std::vector<convex_hull::point> projectPointOnPath(const std::vector<convex_hull::point>& hull, const boost::geometry::model::linestring<boost::geometry::model::d2::point_xy<float, boost::geometry::cs::cartesian>>& line);
 	pcl::PointXYZ determineTrackCenter(const pcl::PointXYZ& nearest_left, const pcl::PointXYZ& nearest_right, const pcl::PointXYZ& previous_point, double max_yaw = std::numeric_limits<double>::max());
 	pcl::PointXYZ determineTrackDirection(const pcl::PointXYZ& nearest_left, const pcl::PointXYZ& nearest_right, const pcl::PointXYZ& previous_point, double max_yaw = std::numeric_limits<double>::max());
 	std::pair<std::size_t, std::size_t> getNearestPoints(pcl::octree::OctreePointCloudSearch<pcl::PointXYZ>& left_octree, pcl::octree::OctreePointCloudSearch<pcl::PointXYZ>& right_octree, const pcl::PointXYZ& predicted_position);

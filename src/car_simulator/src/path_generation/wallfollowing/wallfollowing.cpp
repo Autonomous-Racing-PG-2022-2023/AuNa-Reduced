@@ -354,6 +354,11 @@ void Wallfollowing::setPathBounds(pcl::PointCloud<pcl::PointXYZ>& left_cloud, pc
 	std::copy(std::execution::par_unseq, left_hull.begin(), left_hull.end(), points.begin());
 	std::copy(std::execution::par_unseq, right_hull.begin(), right_hull.end(), points.begin());
 	std::vector<convex_hull::point> hull = getConvexHull2D(points);
+
+
+	//create linestring path
+	boost::geometry::model::linestring<boost::geometry::model::d2::point_xy<float, boost::geometry::cs::cartesian>> pathAsLinestring;
+	
 	
 	//Then test if points + radius lie within. If not add bound points
 	const double car_radius = std::max(
@@ -369,6 +374,7 @@ void Wallfollowing::setPathBounds(pcl::PointCloud<pcl::PointXYZ>& left_cloud, pc
 	
 	for(size_t i = 0; i < untransformed_path_point_positions.size(); ++i){
 		const convex_hull::point point(untransformed_path_point_positions[i].x, untransformed_path_point_positions[i].y);
+		pathAsLinestring.push_back(boost::geometry::model::d2::point_xy<float, boost::geometry::cs::cartesian>(untransformed_path_point_positions[i].x, untransformed_path_point_positions[i].y));
 		for(size_t j = 0; j < hull.size(); ++j){
 			const Line<convex_hull::point> line(hull[j], hull[(j + 1) % hull.size()]);
 			
@@ -405,23 +411,28 @@ void Wallfollowing::setPathBounds(pcl::PointCloud<pcl::PointXYZ>& left_cloud, pc
 			}
 		}
 	}
-	
+
 	//Sort by angle around center (cw for left, ccw for right)
-	std::sort(std::execution::par_unseq, left_hull.begin(), left_hull.end(), [](const convex_hull::point& a, const convex_hull::point& b){
-		const double angle_a = std::atan2(a.y, a.x);
-		const double angle_b = std::atan2(b.y, b.x);
+	//std::sort(std::execution::par_unseq, left_hull.begin(), left_hull.end(), [](const convex_hull::point& a, const convex_hull::point& b){
+	//	const double angle_a = std::atan2(a.y, a.x);
+	//	const double angle_b = std::atan2(b.y, b.x);
 		
-		return angle_a < angle_b;
-	});
+	//	return angle_a < angle_b;
+	//});
 	
-	std::sort(std::execution::par_unseq, right_hull.begin(), right_hull.end(), [](const convex_hull::point& a, const convex_hull::point& b){
-		const double angle_a = -std::atan2(a.y, a.x);
-		const double angle_b = -std::atan2(b.y, b.x);
+	//std::sort(std::execution::par_unseq, right_hull.begin(), right_hull.end(), [](const convex_hull::point& a, const convex_hull::point& b){
+	//	const double angle_a = -std::atan2(a.y, a.x);
+	//	const double angle_b = -std::atan2(b.y, b.x);
 		
-		return angle_a < angle_b;
-	});
+	//	return angle_a < angle_b;
+	//});
+
+	left_hull = projectPointOnPath(left_hull, pathAsLinestring);
+	right_hull = projectPointOnPath(right_hull, pathAsLinestring);
 	
 	//Only consider line on the inner side of the track
+
+	/*
 	boost::geometry::model::d2::point_xy<float, boost::geometry::cs::cartesian> car_position(0.0, 0.0);
 	
 	boost::geometry::model::linestring<boost::geometry::model::d2::point_xy<float, boost::geometry::cs::cartesian>> left_bound_poly;
@@ -476,7 +487,7 @@ void Wallfollowing::setPathBounds(pcl::PointCloud<pcl::PointXYZ>& left_cloud, pc
 		}
 		return false;
 	}), right_hull.end());
-	
+	*/
 	//Store into path
 	path.left_bound.resize(left_hull.size());
 	std::transform(std::execution::par_unseq, left_hull.begin(), left_hull.end(), path.left_bound.begin(), [&transform](const convex_hull::point& point){
@@ -500,6 +511,75 @@ void Wallfollowing::setPathBounds(pcl::PointCloud<pcl::PointXYZ>& left_cloud, pc
 		return geometry_point;
 	});
 }
+
+std::vector<convex_hull::point> Wallfollowing::projectPointOnPath(const std::vector<convex_hull::point>& hull, const boost::geometry::model::linestring<boost::geometry::model::d2::point_xy<float, boost::geometry::cs::cartesian>>& line)
+{
+	
+	std::vector<convex_hull::point> final_points;
+
+	const boost::geometry::model::d2::point_xy<float, boost::geometry::cs::cartesian>& first_segment_start = line[0];
+	const boost::geometry::model::d2::point_xy<float, boost::geometry::cs::cartesian>& first_segment_end = line[1];
+	boost::geometry::model::d2::point_xy<float, boost::geometry::cs::cartesian> start_end_vector = line[0];
+
+	const boost::geometry::model::d2::point_xy<float, boost::geometry::cs::cartesian>& last_segment_start = line[line.size()-2];
+	const boost::geometry::model::d2::point_xy<float, boost::geometry::cs::cartesian>& last_segment_end = line[line.size()-1];
+	boost::geometry::model::d2::point_xy<float, boost::geometry::cs::cartesian> last_segment_start_end_vector = line[line.size()-2];
+
+	std::vector<float> list_of_t_values_first_segment;
+	std::vector<float> list_of_t_values_last_segment;
+	boost::geometry::model::d2::point_xy<float, boost::geometry::cs::cartesian> tmp_hull_point;
+
+
+
+	for(size_t j = 0; j < hull.size(); ++j){
+
+		boost::geometry::set<0>(tmp_hull_point, hull[j].x);
+		boost::geometry::set<1>(tmp_hull_point, hull[j].y);
+
+
+
+		// paramaterized position d(t) = a + t * (b - a)
+		boost::geometry::subtract_point(start_end_vector, first_segment_end);
+		boost::geometry::subtract_point(last_segment_start_end_vector, last_segment_end);
+		boost::geometry::subtract_point(tmp_hull_point, first_segment_start);
+		boost::geometry::subtract_point(tmp_hull_point, last_segment_start);
+
+		const float t_first_segment = boost::geometry::dot_product(tmp_hull_point, start_end_vector) / boost::geometry::dot_product(start_end_vector, start_end_vector);
+		const float t_last_segment = boost::geometry::dot_product(tmp_hull_point, last_segment_start_end_vector) / boost::geometry::dot_product(last_segment_start_end_vector, last_segment_start_end_vector);
+	
+		list_of_t_values_first_segment.push_back(t_first_segment);
+		list_of_t_values_last_segment.push_back(t_last_segment);
+
+	}
+
+
+	//Smallest element on first segment
+	std::vector<float>::iterator min_iter = std::max_element(std::execution::par_unseq, list_of_t_values_first_segment.begin(), list_of_t_values_first_segment.end(), [](const float a, const float b){
+		return a > b;
+	});
+
+	std::vector<float>::iterator max_iter = std::min_element(std::execution::par_unseq, list_of_t_values_last_segment.begin(), list_of_t_values_last_segment.end(), [](const float a, const float b){
+		
+		return a > b;
+	});
+
+	if(std::distance(min_iter, max_iter) < 0){
+		//TODO: Copy min_iter to hull.end()
+		std::copy(hull.begin() + std::distance(list_of_t_values_first_segment.begin(), min_iter), hull.end(), std::back_inserter(final_points));
+
+		//TODO: Copy hull.begin() to max_iter
+		std::copy(hull.begin(), hull.begin() + std::distance(list_of_t_values_last_segment.begin(), max_iter), std::back_inserter(final_points));
+
+	}else{
+		//TODO: Copy min_iter to max_iter
+		std::copy(hull.begin() + std::distance(list_of_t_values_first_segment.begin(), min_iter), hull.begin() + std::distance(list_of_t_values_last_segment.begin(), max_iter), std::back_inserter(final_points));
+
+	} 
+
+	return final_points;
+
+}
+
 
 pcl::PointXYZ Wallfollowing::determinePredictedCarPosition()
 {
