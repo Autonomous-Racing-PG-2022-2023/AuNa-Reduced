@@ -175,7 +175,7 @@ void VehicleInterface::callbackImu(
 	tf2::fromMsg(transform_msg.transform, tf_transform);
 	
 	tf2::Vector3 tf_linear_acceleration(imu_ptr_->linear_acceleration.x, imu_ptr_->linear_acceleration.y, imu_ptr_->linear_acceleration.z);
-	tf2::Vector3 tf_angular_velocity(0, 0, 0);
+	tf2::Vector3 tf_angular_velocity(imu_ptr_->angular_velocity.x, imu_ptr_->angular_velocity.y, imu_ptr_->angular_velocity.z);
 	
 	const tf2::Vector3 tf_transformed_linear_acceleration = tf_transform * tf_linear_acceleration;
 	const tf2::Vector3 tf_transformed_angular_velocity = tf_transform * tf_angular_velocity;
