@@ -1,26 +1,84 @@
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/pose_array.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "autoware_auto_vehicle_msgs/msg/velocity_report.hpp"
 
-rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher;
-std::vector<std_msgs::msg::String> messages;
+#include "autoware_auto_perception_msgs/msg/predicted_objects.hpp"
+#include "autoware_auto_perception_msgs/msg/predicted_object.hpp"
+#include "autoware_auto_perception_msgs/msg/object_classification.hpp"
+#include "autoware_auto_perception_msgs/msg/predicted_object_kinematics.hpp"
 
+rclcpp::Publisher<autoware_auto_perception_msgs::msg::PredictedObject>::SharedPtr publisher;
+std::vector<autoware_auto_perception_msgs::msg::PredictedObject> messages;
+geometry_msgs::msg::PoseArray poses;
+geometry_msgs::msg::Vector3 linearVector;
 
 void velocityReportCallback(const autoware_auto_vehicle_msgs::msg::VelocityReport::SharedPtr msg, const std::string& robotName)
 {
-        double longitudinalVelocity = msg->longitudinal_velocity;
-        double lateralVelocity = msg->lateral_velocity;
-        //RCLCPP_INFO(rclcpp::get_logger("subscriber_node"), "Velocity Report: Longitudinal=%.2f, Lateral=%.2f",
-        //                                                              longitudinalVelocity, lateralVelocity);
-        //auto message = std_msgs::msg::String();
-        std_msgs::msg::String message;
-        message.data = "Robot "+ robotName +"'s velocity report: , Long = " + std::to_string(longitudinalVelocity)+
-                ", Lateral = " + std::to_string(lateralVelocity);
-        messages.push_back(message);
-        //RCLCPP_INFO(rclcpp::get_logger("subscription_node"), "published '%s'", message.data.c_str());
-        //publisher -> publish(message);
+        linearVector.x = msg->longitudinal_velocity;
+        linearVector.y = msg->lateral_velocity;
+}
 
+
+void pathCallback(const geometry_msgs::msg::PoseArray::SharedPtr msg, const int robotId) {
+        poses = *msg;
+
+        autoware_auto_perception_msgs::msg::PredictedPath predicted_path;
+        predicted_path.path.push_back(poses.poses[0]);
+        predicted_path.path.push_back(poses.poses[1]);
+
+        geometry_msgs::msg::PoseWithCovariance initial_pose_with_covariance;
+        initial_pose_with_covariance.pose = poses.poses[0];
+
+        unique_identifier_msgs::msg::UUID object_id;
+        object_id.uuid[0] = robotId % 255;
+
+        geometry_msgs::msg::Vector3 emptyVector;
+        emptyVector.x = 0.0;
+        emptyVector.y = 0.0;
+        emptyVector.z = 0.0;
+
+        builtin_interfaces::msg::Duration time_step;
+        time_step.sec = 1;
+        time_step.nanosec = 0;
+
+      	geometry_msgs::msg::TwistWithCovariance initial_twist_with_covariance;
+        initial_twist_with_covariance.twist.linear = linearVector;
+        initial_twist_with_covariance.twist.angular = emptyVector;
+
+      	geometry_msgs::msg::AccelWithCovariance initial_acceleration_with_covariance;
+        initial_acceleration_with_covariance.accel.linear = emptyVector;
+        initial_acceleration_with_covariance.accel.angular = emptyVector;
+
+        predicted_path.time_step = time_step;
+
+        autoware_auto_perception_msgs::msg::ObjectClassification classification;
+        classification.label = 1;	// 1 == CAR
+        classification.probability = 1.0;
+
+        autoware_auto_perception_msgs::msg::PredictedObjectKinematics kinematics;
+        kinematics.initial_pose_with_covariance = initial_pose_with_covariance;
+        kinematics.initial_twist_with_covariance = initial_twist_with_covariance;
+        kinematics.initial_acceleration_with_covariance = initial_acceleration_with_covariance;
+        kinematics.predicted_paths.push_back(predicted_path);
+
+        autoware_auto_perception_msgs::msg::Shape shape;
+        shape.type = 1;		// BOUNDING_BOX=0, CYLINDER=1, POLYGON=2
+        geometry_msgs::msg::Vector3 dimensions;
+        dimensions.x = 1.0;
+        dimensions.y = 0.0;
+        dimensions.z = 1.0;
+        shape.dimensions = dimensions;
+
+        autoware_auto_perception_msgs::msg::PredictedObject predictedObject;
+        predictedObject.object_id = object_id;
+        predictedObject.existence_probability = 1.0;
+        predictedObject.classification.push_back(classification);
+        predictedObject.kinematics = kinematics;
+        predictedObject.shape = shape;
+
+        messages.push_back(predictedObject);
 }
 
 
@@ -40,7 +98,7 @@ int main(int argc, char** argv)
 
 
         auto node = rclcpp::Node::make_shared("publisher_node");
-        publisher = node->create_publisher<std_msgs::msg::String>("/topic", 10);
+        publisher = node->create_publisher<autoware_auto_perception_msgs::msg::PredictedObject>("/topic", 10);
 
         std::vector<rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::VelocityReport>::SharedPtr> subscriptions;
 
@@ -64,19 +122,31 @@ int main(int argc, char** argv)
         //auto subscription = node->create_subscription<autoware_auto_vehicle_msgs::msg::VelocityReport>(
         //                                      "/robot0/vehicle/status/velocity_status",10,velocityReportCallback);
 
-        auto subscription = node -> create_subscription<autoware_auto_vehicle_msgs::msg::VelocityReport>(
+        int robotId = std::stoi(robotName.substr(7,8));
+
+        linearVector.x = 0.0;
+        linearVector.y = 0.0;
+        linearVector.z = 0.0;
+
+        auto velSub = node -> create_subscription<autoware_auto_vehicle_msgs::msg::VelocityReport>(
                               robotTopic, 10,
                               [robotName] (const autoware_auto_vehicle_msgs::msg::VelocityReport::SharedPtr msg) {
                               velocityReportCallback(msg,robotName);
                               });
         //RCLCPP_INFO(node->get_logger(), "Subscription created on vehicle/status/velocity_status");
 
-        rclcpp::WallRate loop_rate(0.2); // 0.2 Hz (every 5 seconds)
+        auto pathSub = node -> create_subscription<geometry_msgs::msg::PoseArray>(
+                              "/"+robotName+ "/wallfollowing/debug/path/poses", 
+                              10,
+                              [robotId] (const geometry_msgs::msg::PoseArray::SharedPtr msg) {
+                              pathCallback(msg, robotId);
+                              });
+
+        rclcpp::WallRate loop_rate(20); // 2 Hz (every 0.5 seconds)
         //int count = 0;
         while (rclcpp::ok()) {
                 for (const auto& message : messages) {
-                        if(!message.data.empty()){
-                                RCLCPP_INFO(node->get_logger(), "Publishing '%s'", message.data.c_str());
+                        if(message.object_id.uuid[0] != 0){
                                 publisher -> publish(message);
                         }
                 }
