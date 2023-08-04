@@ -108,7 +108,10 @@ def generate_launch_description():
         actions = [
             remap_tf,
             remap_tf_static,
-            SetRemap(src='~/input/reference_trajectory', dst='motion_velocity_smoother/output/trajectory'),
+            #remapp destination geaendert
+            #SetRemap(src='~/input/reference_trajectory', dst='motion_velocity_smoother/output/trajectory'),
+            SetRemap(src='~/input/reference_trajectory', dst='obstacle_avoidance_planner/output/path'),
+            #
             SetRemap(src='~/input/current_steering', dst='vehicle/status/steering_status'),
             SetRemap(src='~/input/current_odometry', dst='odom'),
             SetRemap(src='~/input/current_accel', dst='vehicle/status/acceleration'),

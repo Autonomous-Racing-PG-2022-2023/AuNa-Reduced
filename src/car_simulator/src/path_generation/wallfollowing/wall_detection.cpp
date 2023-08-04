@@ -15,11 +15,13 @@
 #include "fit_walls.hpp"
 #include "track.hpp"
 
+using namespace std::literals::chrono_literals;
+
 WallDetection::WallDetection()
     : Node("walldetection"), preserved_voxels(std::make_shared<pcl::PointCloud<pcl::PointXYZRGBL>>())
 {
 	/* setup parameters */
-	enable_debug_topics_ = declare_parameter<bool>("enable_debug_topics", false);
+	enable_debug_topics_ = declare_parameter<bool>("enable_debug_topics", true);
 	
 	voxel_size_ = declare_parameter<double>("voxel_size", 0.15);
 	min_points_per_voxel_ = declare_parameter<int>("min_points_per_voxel", 0);
@@ -122,19 +124,24 @@ WallDetection::WallDetection()
 	);
 }
 
-std::pair<pcl::Indices, pcl::Indices> WallDetection::addClustersOnRegression(
+std::pair<pcl::Indices, pcl::Indices> WallDetection::wallextensionByRadius(
 	const pcl::PointCloud<pcl::PointXYZRGBL>::ConstPtr cloud,
     const std::unordered_map<uint32_t, pcl::IndicesPtr>& mapClusters,
 	const std::unordered_set<uint32_t>& inputIgnoreIDs,
-    const pcl::IndicesConstPtr leftWall,
-	const pcl::IndicesConstPtr rightWall
+	int margin
 )
+// add margin to the length of the last centerpoint to calculate a radius by which to filter the wanted points
 {
-	Circle<pcl::PointXYZRGBL> leftCircle = FitWalls::fitWall<pcl::PointXYZRGBL>(cloud, leftWall, sac_distance_to_model_threshold_, sac_max_iterations_);
-	Circle<pcl::PointXYZRGBL> rightCircle = FitWalls::fitWall<pcl::PointXYZRGBL>(cloud, rightWall, sac_distance_to_model_threshold_, sac_max_iterations_);
-
     std::pair<pcl::Indices, pcl::Indices> additional_wall_ids;
 
+	const pcl::PointXYZRGBL track_direction_0 = getTrackDirection(cloud);
+	const pcl::PointXYZRGBL track_direction_1 = getTrackDirectionByRadius(cloud,track_direction_0, margin);
+	Line<pcl::PointXYZRGBL> track_line(track_direction_0, track_direction_1);
+
+	// std::cout <<"track_direction_0: "<< track_direction_0 << std::endl;
+	// std::cout <<"track_direction_1: "<< track_direction_1 << std::endl;
+	// std::cout << "track_line length: " << track_line.length() <<std::endl;
+	//connect these two center points and it should approximate the track better than just a single center point (from which a directions is determined).
     for (auto cluster_wall : mapClusters)
     {
         const uint32_t clusterID = cluster_wall.first;
@@ -146,39 +153,116 @@ std::pair<pcl::Indices, pcl::Indices> WallDetection::addClustersOnRegression(
 
         const pcl::IndicesConstPtr cluster = cluster_wall.second;
 
-		//Determine score
-        int32_t leftScore = 0, rightScore = 0;
-        for (size_t i = 0; i < cluster->size(); i++)
-        {
-            pcl::PointXYZRGBL p = cloud->at(cluster->at(i));
+		double sum_signed_distance = 0;
 
-            if (leftCircle.getDistance(p) < distance_threshold_){
-                leftScore++;
-			}
+        for (size_t i = 0; i < cluster_wall.second->size(); ++i)
+        {
+			const pcl::PointXYZRGBL& point = cloud->at(cluster_wall.second->at(i));
 			
-			if (rightCircle.getDistance(p) < distance_threshold_){
-                rightScore++;
+			const double signed_distance = GeometricFunctions::calcSignedShortestDistanceToLine(point, track_line);
+			
+			sum_signed_distance = sum_signed_distance + signed_distance;
+        }
+
+		if (sum_signed_distance <= 0)
+			{
+				additional_wall_ids.first.push_back(clusterID);
+			} else if (sum_signed_distance / cluster_wall.second->size() > 0)
+			{
+				additional_wall_ids.second.push_back(clusterID);
 			}
-        }
-
-		//If score is high enough, add clusters to wall clusters
-        const double confidence = fabsf(1 - (static_cast<double>(leftScore + 1) / static_cast<double>(rightScore + 1)));
-        if (confidence > minimum_confidence_ && (leftScore > score_threshold_ || rightScore > score_threshold_))
-        {
-            if (leftScore > rightScore)
-            {
-                additional_wall_ids.first.push_back(clusterID);
-            } else if (rightScore > leftScore)
-            {
-                additional_wall_ids.second.push_back(clusterID);
-            }
-        }
     }
-
+	// std::cout << "additional_wall_ids.first: ";
+	// for (auto id : additional_wall_ids.first){
+	// 	std::cout << id;
+	// }
+	// std::cout << std::endl << "additional_wall_ids.second: " << std::endl;
+	// for (auto id : additional_wall_ids.second){
+	// 	std::cout << id;
+	// }
+	// std::cout << std::endl;
     return additional_wall_ids;
 }
 
+// find the larges gap in the pointcloud out side a certain radius around the car.
+pcl::PointXYZRGBL WallDetection::getTrackDirectionByRadius(const pcl::PointCloud<pcl::PointXYZRGBL>::ConstPtr cloud, const pcl::PointXYZRGBL cutoff, int margin){
+	std::vector<pcl::PointXYZRGBL> sorted_points(cloud->begin(), cloud->end());
 
+	// std::cout << "raw radius sorted points size:"<< sorted_points.size() << std::endl;
+
+	//define the radius as half of the cloud width
+	//const uint32_t radius = (cloud->width)/4;
+
+	// pcl::PointXYZRGBL farthest_point = *std::max_element(std::execution::par_unseq, sorted_points.begin(), sorted_points.end(), [](const pcl::PointXYZRGBL& a, const pcl::PointXYZRGBL& b){
+	// 	const double length_a = std::sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
+	// 	const double length_b = std::sqrt(b.x * b.x + b.y * b.y + b.z * b.z);
+		
+	// 	return length_a < length_b;
+	// });
+	const uint32_t radius = (std::sqrt(cutoff.x * cutoff.x + cutoff.y * cutoff.y + cutoff.z * cutoff.z));
+
+	// std::cout << "radius:"<< radius << std::endl;
+
+	//Remove all points behind the car
+	//TODO:Maybe also sort out by radius? Currentl not required, but maybe later benefical?
+	sorted_points.erase(std::remove_if(std::execution::par_unseq, sorted_points.begin(), sorted_points.end(), [](const pcl::PointXYZRGBL& point){
+		return (
+			(point.x < 0)
+		);
+	}), sorted_points.end());
+
+	
+	sorted_points.erase(std::remove_if(std::execution::par_unseq, sorted_points.begin(), sorted_points.end(), [&radius, &margin](const pcl::PointXYZRGBL& point){
+	const double distance_from_origin = std::sqrt(point.x * point.x + point.y * point.y + point.z * point.z);
+	return distance_from_origin < radius;
+	}), sorted_points.end());
+
+	sorted_points.erase(std::remove_if(std::execution::par_unseq, sorted_points.begin(), sorted_points.end(), [&radius, &margin](const pcl::PointXYZRGBL& point){
+	const double distance_from_origin = std::sqrt(point.x * point.x + point.y * point.y + point.z * point.z);
+	return distance_from_origin > (radius + margin);
+	}), sorted_points.end());
+	
+	
+
+	// std::cout << "radius sorted points size:"<< sorted_points.size() << std::endl;
+	// std::cout << "print sorted points start" << std::endl;
+	// for (auto i : sorted_points)
+	// 	std::cout << i << std::endl;
+	// std::cout << "radius print sorted points end" << std::endl;
+
+	//Sort by angle
+	std::sort(std::execution::par_unseq, sorted_points.begin(), sorted_points.end(), [](const pcl::PointXYZRGBL& a, const pcl::PointXYZRGBL& b){
+		const double yaw_a = std::atan2(a.y, a.x);
+		const double yaw_b = std::atan2(b.y, b.x);
+		
+		return yaw_a < yaw_b;
+	});
+	//Create segments
+	std::vector<std::pair<pcl::PointXYZRGBL, pcl::PointXYZRGBL>> segments(sorted_points.size());
+	std::transform(std::execution::par_unseq, sorted_points.begin(), sorted_points.end() - 1, sorted_points.begin() + 1, segments.begin(), [](const pcl::PointXYZRGBL& start, const pcl::PointXYZRGBL& end){
+		return std::make_pair(start, end);
+	});
+
+	// maybe the problem is there are no points in the list so it throws an error
+	//Then find segment with most distance between points
+	std::pair<pcl::PointXYZRGBL, pcl::PointXYZRGBL> segment_in_front = *std::max_element(std::execution::par_unseq, segments.begin(), segments.end(), [](const std::pair<pcl::PointXYZRGBL, pcl::PointXYZRGBL>& a, const std::pair<pcl::PointXYZRGBL, pcl::PointXYZRGBL>& b){
+		const double length_a = GeometricFunctions::distance(a.first, a.second);
+		const double length_b = GeometricFunctions::distance(b.first, b.second);
+		
+		return length_a < length_b;
+	});
+
+	//Calculate it's center to get the track direction
+
+	const pcl::PointXYZRGBL center(
+		segment_in_front.second.x - segment_in_front.first.x,
+		segment_in_front.second.y - segment_in_front.first.y,
+		segment_in_front.second.z - segment_in_front.first.z
+	);
+
+	// std::cout <<"center: "<< center << std::endl;
+	return center;
+}
 //TODO: Also use this value in other parts like for clustering or in wallfollowing
 //Find track direction. Biggest holes in surrounding
 pcl::PointXYZRGBL WallDetection::getTrackDirection(const pcl::PointCloud<pcl::PointXYZRGBL>::ConstPtr cloud){
@@ -191,6 +275,8 @@ pcl::PointXYZRGBL WallDetection::getTrackDirection(const pcl::PointCloud<pcl::Po
 			(point.x < 0)
 		);
 	}), sorted_points.end());
+
+	// std::cout << "normal sorted points size:"<< sorted_points.size() << std::endl;
 
 	//Sort by angle
 	std::sort(std::execution::par_unseq, sorted_points.begin(), sorted_points.end(), [](const pcl::PointXYZRGBL& a, const pcl::PointXYZRGBL& b){
@@ -254,6 +340,8 @@ std::pair<int64_t, int64_t> WallDetection::determineWallIDs(
 {
 	//Define line that divides track in left and right
 	Line<pcl::PointXYZRGBL> track_line(pcl::PointXYZRGBL(), track_direction);
+	// std::cout << "line start: " << track_line.start << std::endl;
+	// std::cout << "line end: " << track_line.end << std::endl;
 	
     double maxRight = 0.0;
     double minLeft = 0.0;
@@ -656,6 +744,7 @@ void WallDetection::publishTrack(
 		//Add all points associated with voxel
 		left_cloud_indices->insert(left_cloud_indices->end(), points.begin(), points.end());
 	});
+	
 	std::for_each(std::execution::seq, cloud_right.begin(), cloud_right.end(), [this, &octree, &input_cloud, &right_cloud_indices](const pcl::PointXYZRGBL& voxel){
 		pcl::Indices points;
 		if(!voxelSearch(octree, voxel, points)){//!octree.voxelSearch(voxel, points)){
@@ -675,9 +764,10 @@ void WallDetection::publishTrack(
 	pcl::copyPointCloud(*input_cloud, *input_cloud_xyz);
 	
 	car_simulator_msgs::msg::Track track = TrackGenerator::generateTrack(input_cloud_xyz, left_cloud_indices, right_cloud_indices, track_radius_propotions_, track_in_front_threshold_, track_upper_wall_offset_, sac_distance_to_model_threshold_, sac_max_iterations_);
-
+	
     // Publish the data
     this->track_pub_->publish(track);
+	
 }
 
 void WallDetection::publishPointCloud(
@@ -714,6 +804,9 @@ void WallDetection::callbackPointCloud(const sensor_msgs::msg::PointCloud2::Cons
 		try{
 			transform_from_map_msg = tf_buffer_->lookupTransform(point_cloud_in->header.frame_id, "map", tf2::TimePointZero);//FIXME: Check for matching timestamp tf2_ros::fromMsg(t_link.header.stamp));
 			transform_to_map_msg = tf_buffer_->lookupTransform("map", point_cloud_in->header.frame_id, tf2::TimePointZero);//FIXME: Check for matching timestamp tf2_ros::fromMsg(t_link.header.stamp));
+			// rclcpp::Time now = this->get_clock()->now();
+			// transform_from_map_msg = tf_buffer_->lookupTransform(point_cloud_in->header.frame_id, "map", now, 500ms);
+			// transform_to_map_msg = tf_buffer_->lookupTransform("map", point_cloud_in->header.frame_id, now, 500ms);
 		} catch (std::exception& e) {
 			RCLCPP_ERROR(this->get_logger(), "%s", e.what());
 			return;
@@ -778,7 +871,10 @@ void WallDetection::callbackPointCloud(const sensor_msgs::msg::PointCloud2::Cons
 			}
 			it->second->push_back(i);
 		}
-		
+		// for (auto const &i: clustersUsed) {
+		// 	std::cout <<"label: "<< i.first << std::endl;
+    	// }
+
 		std::unordered_set<uint32_t> ignoreIDs;
 		if(clustersUsed.size() > 1){
 			// determine maximum left and right clusters in a radius
@@ -788,24 +884,34 @@ void WallDetection::callbackPointCloud(const sensor_msgs::msg::PointCloud2::Cons
 			{
 				pcl::IndicesPtr leftWall = clustersUsed[wallIds.first];
 				pcl::IndicesPtr rightWall = clustersUsed[wallIds.second];
+				// std::cout << "leftWall indices:" << wallIds.first << std::endl;
+				// std::cout << "rightWall indices:" << wallIds.second << std::endl;
 				
-				if(leftWall->size() > 2 && rightWall->size() > 2){
+				if(leftWall->size() > 5 && rightWall->size() > 5){	//if(leftWall->size() > 2 && rightWall->size() > 2){
 					ignoreIDs.insert(wallIds.first);
 					ignoreIDs.insert(wallIds.second);
 
+					// for (auto const &i: ignoreIDs) {
+					// 	std::cout << i << " ";
+    				// }
+				
+
 					if (use_prediction_for_walls_ || use_prediction_for_obstacles_)
 					{
-						std::pair<pcl::Indices, pcl::Indices> additional_wall_ids;//NOTE: Not used currently. Instead adjust DBSCAN parameters = addClustersOnRegression(cloud_clusters_ptr, clustersUsed, ignoreIDs, leftWall, rightWall);
+
+						std::pair<pcl::Indices, pcl::Indices> additional_wall_ids = wallextensionByRadius(cloud_clusters_ptr, clustersUsed, ignoreIDs,30);//NOTE: Not used currently. Instead adjust DBSCAN parameters = addClustersOnRegression(cloud_clusters_ptr, clustersUsed, ignoreIDs, leftWall, rightWall);
 
 						if (use_prediction_for_walls_)
 						{
 							for (const uint32_t id : additional_wall_ids.first)
 							{
+								//std::cout << "additional_wall_ids.first:" << id << std::endl;
 								leftWall->insert(leftWall->end(), clustersUsed[id]->begin(), clustersUsed[id]->end());
 							}
 
 							for (const uint32_t  id : additional_wall_ids.second)
 							{
+								//std::cout << "additional_wall_ids.second:" << id << std::endl;
 								rightWall->insert(rightWall->end(), clustersUsed[id]->begin(), clustersUsed[id]->end());
 							}
 						}
@@ -815,7 +921,6 @@ void WallDetection::callbackPointCloud(const sensor_msgs::msg::PointCloud2::Cons
 							ignoreIDs.insert(additional_wall_ids.second.begin(), additional_wall_ids.second.end());
 						}
 					}
-					
 					// publish only the clusters with ids equal to the walls
 					publishTrack(cloud_ptr, cloud_clusters_ptr, octree, leftWall, rightWall);
 				}

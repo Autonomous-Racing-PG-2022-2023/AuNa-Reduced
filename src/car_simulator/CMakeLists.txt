@@ -112,6 +112,7 @@ include_directories(SYSTEM
   ${PCL_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
 )
+include_directories(/opt/ros/galactic/include/)
 link_directories(
   ${Boost_LIBRARY_DIRS}
   ${PCL_LIBRARY_DIRS}
