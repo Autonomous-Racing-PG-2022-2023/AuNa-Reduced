@@ -89,8 +89,10 @@ car_simulator_msgs::msg::Track TrackGenerator::generateTrack(const pcl::PointClo
 	filter_right.setInputCloud(cloud);
 	filter_right.filter(*right_cloud_ptr);
 
-	//left_circle = FitWalls::fitWall<pcl::PointXYZ>(cloud, left_wall, sac_distance_to_model_threshold, sac_max_iterations);
-	//right_circle = FitWalls::fitWall<pcl::PointXYZ>(cloud, right_wall, sac_distance_to_model_threshold, sac_max_iterations);
+/*
+	left_circle = FitWalls::fitWall<pcl::PointXYZ>(cloud, left_wall, sac_distance_to_model_threshold, sac_max_iterations);
+	right_circle = FitWalls::fitWall<pcl::PointXYZ>(cloud, right_wall, sac_distance_to_model_threshold, sac_max_iterations);
+*/
 
     car_position = pcl::PointXYZ(0.0f, 0.0f, 0.0f);
     curve_type.data = car_simulator_msgs::msg::TrackCurveType::CURVE_TYPE_STRAIGHT;
@@ -100,30 +102,31 @@ car_simulator_msgs::msg::Track TrackGenerator::generateTrack(const pcl::PointClo
 	//TODO: Also somehow move in the middle of the track if we are not in a curve
     //double radius_proportions_left = left_circle.getRadius() / right_circle.getRadius();
     //double radius_proportions_right = right_circle.getRadius() / left_circle.getRadius();
-	
-    // if (right_circle.getCenter().y > 0)//TODO: radius_proportions_left > radius_propotions)
-    // {
-    //     curve_entry = getCurveEntry(left_cloud_ptr);
-    //     pcl::PointXYZ nearest_point_to_car = calcNearestPointToPoint(left_cloud_ptr, car_position);
-    //     if (isCurveEntryInFront(curve_entry, nearest_point_to_car, in_front_threshold))
-    //     {
-    //         upper_wall = cropPointcloud(right_cloud_ptr, curve_entry.y - upper_wall_offset);
-	// 		upper_cloud_src_ptr = right_cloud_ptr;
-    //         curve_type.data = car_simulator_msgs::msg::TrackCurveType::CURVE_TYPE_LEFT;
-    //     }
-    // }
-    // else if (left_circle.getCenter().y < 0)//TODO: radius_proportions_right > radius_propotions)
-    // {
-    //     curve_entry = getCurveEntry(right_cloud_ptr);
-    //     pcl::PointXYZ nearest_point_to_car = calcNearestPointToPoint(right_cloud_ptr, car_position);
-    //     if (isCurveEntryInFront(curve_entry, nearest_point_to_car, in_front_threshold))
-    //     {
-    //         upper_wall = cropPointcloud(left_cloud_ptr, curve_entry.y - upper_wall_offset);
-	// 		upper_cloud_src_ptr = left_cloud_ptr;
-    //         curve_type.data = car_simulator_msgs::msg::TrackCurveType::CURVE_TYPE_RIGHT;
-    //     }
-    // }
-	
+
+/*	
+    if (right_circle.getCenter().y > 0)//TODO: radius_proportions_left > radius_propotions)
+    {
+        curve_entry = getCurveEntry(left_cloud_ptr);
+        pcl::PointXYZ nearest_point_to_car = calcNearestPointToPoint(left_cloud_ptr, car_position);
+        if (isCurveEntryInFront(curve_entry, nearest_point_to_car, in_front_threshold))
+        {
+            upper_wall = cropPointcloud(right_cloud_ptr, curve_entry.y - upper_wall_offset);
+			upper_cloud_src_ptr = right_cloud_ptr;
+            curve_type.data = car_simulator_msgs::msg::TrackCurveType::CURVE_TYPE_LEFT;
+        }
+    }
+    else if (left_circle.getCenter().y < 0)//TODO: radius_proportions_right > radius_propotions)
+    {
+        curve_entry = getCurveEntry(right_cloud_ptr);
+        pcl::PointXYZ nearest_point_to_car = calcNearestPointToPoint(right_cloud_ptr, car_position);
+        if (isCurveEntryInFront(curve_entry, nearest_point_to_car, in_front_threshold))
+        {
+            upper_wall = cropPointcloud(left_cloud_ptr, curve_entry.y - upper_wall_offset);
+			upper_cloud_src_ptr = left_cloud_ptr;
+            curve_type.data = car_simulator_msgs::msg::TrackCurveType::CURVE_TYPE_RIGHT;
+        }
+    }
+*/
 	if(upper_wall && upper_wall->size() > 2){
 		if (curve_type.data != car_simulator_msgs::msg::TrackCurveType::CURVE_TYPE_STRAIGHT)
 		{

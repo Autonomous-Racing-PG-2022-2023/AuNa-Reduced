@@ -124,6 +124,14 @@ WallDetection::WallDetection()
 	);
 }
 
+
+// filter the points, so that only a ring of points which is a certain margin from the car away is left
+// calculate a new center from these points and connect this new center with the old track center.
+// this should create a line, which approximates the road a head. Then it sums up the signed distance from the each cloud to this line and decides
+// if this cloud is part of the left wall or the right wall
+
+// when starting the process of detecting, it might miss assign the clusters, this might be due to not having enough points or due to missalignment
+// but after correcting the cars posture it should be ralatively stable
 std::pair<pcl::Indices, pcl::Indices> WallDetection::wallextensionByRadius(
 	const pcl::PointCloud<pcl::PointXYZRGBL>::ConstPtr cloud,
     const std::unordered_map<uint32_t, pcl::IndicesPtr>& mapClusters,
@@ -188,47 +196,29 @@ std::pair<pcl::Indices, pcl::Indices> WallDetection::wallextensionByRadius(
 pcl::PointXYZRGBL WallDetection::getTrackDirectionByRadius(const pcl::PointCloud<pcl::PointXYZRGBL>::ConstPtr cloud, const pcl::PointXYZRGBL cutoff, int margin){
 	std::vector<pcl::PointXYZRGBL> sorted_points(cloud->begin(), cloud->end());
 
-	// std::cout << "raw radius sorted points size:"<< sorted_points.size() << std::endl;
-
-	//define the radius as half of the cloud width
-	//const uint32_t radius = (cloud->width)/4;
-
-	// pcl::PointXYZRGBL farthest_point = *std::max_element(std::execution::par_unseq, sorted_points.begin(), sorted_points.end(), [](const pcl::PointXYZRGBL& a, const pcl::PointXYZRGBL& b){
-	// 	const double length_a = std::sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
-	// 	const double length_b = std::sqrt(b.x * b.x + b.y * b.y + b.z * b.z);
-		
-	// 	return length_a < length_b;
-	// });
 	const uint32_t radius = (std::sqrt(cutoff.x * cutoff.x + cutoff.y * cutoff.y + cutoff.z * cutoff.z));
 
 	// std::cout << "radius:"<< radius << std::endl;
 
 	//Remove all points behind the car
-	//TODO:Maybe also sort out by radius? Currentl not required, but maybe later benefical?
 	sorted_points.erase(std::remove_if(std::execution::par_unseq, sorted_points.begin(), sorted_points.end(), [](const pcl::PointXYZRGBL& point){
 		return (
 			(point.x < 0)
 		);
 	}), sorted_points.end());
 
-	
+	// remove all the point inside the radius
 	sorted_points.erase(std::remove_if(std::execution::par_unseq, sorted_points.begin(), sorted_points.end(), [&radius, &margin](const pcl::PointXYZRGBL& point){
 	const double distance_from_origin = std::sqrt(point.x * point.x + point.y * point.y + point.z * point.z);
 	return distance_from_origin < radius;
 	}), sorted_points.end());
 
+	// remove all the points outsite of (radius + margin), so there are only points in a ring form left
 	sorted_points.erase(std::remove_if(std::execution::par_unseq, sorted_points.begin(), sorted_points.end(), [&radius, &margin](const pcl::PointXYZRGBL& point){
 	const double distance_from_origin = std::sqrt(point.x * point.x + point.y * point.y + point.z * point.z);
 	return distance_from_origin > (radius + margin);
 	}), sorted_points.end());
 	
-	
-
-	// std::cout << "radius sorted points size:"<< sorted_points.size() << std::endl;
-	// std::cout << "print sorted points start" << std::endl;
-	// for (auto i : sorted_points)
-	// 	std::cout << i << std::endl;
-	// std::cout << "radius print sorted points end" << std::endl;
 
 	//Sort by angle
 	std::sort(std::execution::par_unseq, sorted_points.begin(), sorted_points.end(), [](const pcl::PointXYZRGBL& a, const pcl::PointXYZRGBL& b){
@@ -263,20 +253,18 @@ pcl::PointXYZRGBL WallDetection::getTrackDirectionByRadius(const pcl::PointCloud
 	// std::cout <<"center: "<< center << std::endl;
 	return center;
 }
-//TODO: Also use this value in other parts like for clustering or in wallfollowing
+
 //Find track direction. Biggest holes in surrounding
 pcl::PointXYZRGBL WallDetection::getTrackDirection(const pcl::PointCloud<pcl::PointXYZRGBL>::ConstPtr cloud){
 	std::vector<pcl::PointXYZRGBL> sorted_points(cloud->begin(), cloud->end());
 	
 	//Remove all points behind the car
-	//TODO:Maybe also sort out by radius? Currentl not required, but maybe later benefical?
+
 	sorted_points.erase(std::remove_if(std::execution::par_unseq, sorted_points.begin(), sorted_points.end(), [](const pcl::PointXYZRGBL& point){
 		return (
 			(point.x < 0)
 		);
 	}), sorted_points.end());
-
-	// std::cout << "normal sorted points size:"<< sorted_points.size() << std::endl;
 
 	//Sort by angle
 	std::sort(std::execution::par_unseq, sorted_points.begin(), sorted_points.end(), [](const pcl::PointXYZRGBL& a, const pcl::PointXYZRGBL& b){
@@ -330,7 +318,6 @@ int64_t WallDetection::findLargestCluster(
     return largestClusterID;
 }
 
-//TODO: Still not perfect. Might detect track direction correctly, but same cluster might lie on left and right side causing problems when detecting. Fix this (e.g. by testing, on which side of the line most clusterpoints lie).
 std::pair<int64_t, int64_t> WallDetection::determineWallIDs(
 	const pcl::PointCloud<pcl::PointXYZRGBL>::ConstPtr cloud,
     const std::unordered_map<uint32_t, pcl::IndicesPtr>& mapToCheck,
@@ -405,8 +392,6 @@ pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBL> WallDetection::boxing(
 		point.label = DBSCAN::NOISE;
 	});
 	
-	//TODO: Only use a percentage of points based on lidar_percentage?
-	
 	//Downsample data, by generating link from voxels to original data
 
 	//Octree for spatial optimization
@@ -445,81 +430,6 @@ pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBL> WallDetection::boxing(
 
 	return octree;//No std::move to allow copy elision
 
-/*
-    // now quantize this cloud for our system. this could probably also be implemented as a proper filter
-
-    float largest_intensity = 0;
-
-	//TODO: Maybe use differrent data stracture (2D/3D grid or hash structure)
-    std::unordered_map<uint64_t, std::vector<size_t>> quantized_cloud_voxel_map;
-
-	//We only analyze a certain amount of voxels
-    size_t step_size = 1.0 / lidar_percentage_;
-
-	if(step_size > 0){
-		for (size_t i = 0; i < output_cloud->points.size(); i += step_size)
-		{
-			pcl::PointXYZ& point = output_cloud->at(i);
-			float x = point.x - remainderf(point.x, voxel_size_);
-			float y = point.y - remainderf(point.y, voxel_size_);
-			float z = point.z; // - remainderf(point.z, m_voxel_size);
-
-			// Search the voxel we want to increment
-			// If we found the voxel, increase it's intensity (count of points in  that voxel)
-			// Otherwise add a new voxel to our map
-			uint64_t voxel_id = get_voxel_id(x, y, z);
-			auto foundPair = quantized_cloud_voxel_map.find(voxel_id);
-			if (foundPair != quantized_cloud_voxel_map.end())
-			{
-				pcl::PointXYZRGBL* foundPoint = &(foundPair->second);
-				foundPoint->label++;
-
-				largest_intensity = std::max(largest_intensity, foundPoint->label);
-			}
-			else
-			{
-				pcl::PointXYZRGBL point;
-				point.x = x;
-				point.y = y;
-				point.z = z;
-				point.label = 1;
-				largest_intensity = std::max(largest_intensity, 1);
-				quantized_cloud_voxel_map[voxel_id] = point;
-			}
-		}
-	}
-	
-	//Filter out values with too low intensity
-	if (m_filter_by_min_score_enabled)
-	{
-		//TODO:Use remove_if
-		//TODO: Maybe directly remove on coppy with suitable function
-		auto it = quantized_cloud_voxel_map.begin();
-		while(it != quantized_cloud_voxel_map.end())
-		{
-			pcl::PointXYZRGBL point = it.second;
-			if ((point.label / largest_intensity) < m_filter_by_min_score){
-                it = quantized_cloud_voxel_map.erase(it);
-			}else{
-				it++;
-			}
-		}
-	}
-
-	//Create output point cloud
-    pcl::PointCloud<pcl::PointXYZRGBL>::Ptr quantized_cloud(new pcl::PointCloud<pcl::PointXYZRGBL>);
-	quantized_cloud->resize(quantized_cloud_voxel_map.size());
-   
-	//Copy data from map to point cloud
-	std::transform(std::execution::par_unseq, quantized_cloud_voxel_map.begin(), quantized_cloud_voxel_map.end(), quantized_cloud.begin(), [](const std::unordered_map<uint64_t, pcl::PointXYZRGBL>::value_type value){
-		pcl::PointXYZRGBL point = value.second;
-		point.label = (point.label / largest_intensity) * static_cast<float>(std::numeric_limits<uint32_t>::max()); // uint32 max value
-		return point;
-	});
-	
-	//Copy header
-	quantized_cloud->header = output_cloud->header;
-*/
 }
 
 void WallDetection::classifyVoxels(
@@ -527,35 +437,6 @@ void WallDetection::classifyVoxels(
 	pcl::PointCloud<pcl::PointXYZRGBL>::Ptr& cloud_out
 ){
     DBSCAN ds(cloud_in, db_search_minimum_points_, db_search_radius_);
-	/*
-	pcl::PointCloud<pcl::PointXYZRGBL> cloud_filtered;
-	pcl::PassThrough<pcl::PointXYZRGBL> filter_left(true);
-	filter_left.setFilterFieldName("y");
-	filter_left.setFilterLimits(std::numeric_limits<float>::min(), 0.0);
-	
-	filter_left.setInputCloud(cloud_in);
-	filter_left.filter(cloud_filtered);
-	
-	pcl::PassThrough<pcl::PointXYZRGBL> filter_right(true);
-	filter_right.setFilterFieldName("y");
-	filter_right.setFilterLimits(std::numeric_limits<float>::min(), 0.0);
-	filter_right.setNegative(true);
-	
-	filter_right.setInputCloud(cloud_in);
-	filter_right.filter(cloud_filtered);
-	
-	pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBL> octree_voxels_left(voxel_size_);
-	octree_voxels_left.setInputCloud(cloud_in, filter_right.getRemovedIndices());
-	octree_voxels_left.addPointsFromInputCloud();
-	
-	pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBL> octree_voxels_right(voxel_size_);
-	octree_voxels_right.setInputCloud(cloud_in, filter_left.getRemovedIndices());
-	octree_voxels_right.addPointsFromInputCloud();
-	
-	//Run clustering for left and right side of car separatly
-    uint32_t nextClusterID = ds.run(octree_voxels_left, filter_right.getRemovedIndices(), 1);
-	ds.run(octree_voxels_right, filter_left.getRemovedIndices(), nextClusterID);
-	*/
 	
 	pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBL> octree_voxels(voxel_size_);
 	octree_voxels.setInputCloud(cloud_in);
@@ -581,19 +462,6 @@ void WallDetection::classifyVoxels(
 	filter.setInputCloud(cloud_in);
 	filter.filter(*cloud_out);
 
-/*
-	//Remove noise
-	//TODO: Use remove_if
-	auto it = cloud.begin();
-	while(it != cloud.end())
-	{
-		if (it->label == NOISE){
-			it = cloud.erase(it);
-		}else{
-			it++;
-		}
-	}
-	*/
 }
 
 //FIXME: Own octree search, cause existing one does currently not work: https://github.com/PointCloudLibrary/pcl/issues/5637
@@ -798,15 +666,11 @@ void WallDetection::callbackPointCloud(const sensor_msgs::msg::PointCloud2::Cons
 		pcl::copyPointCloud(cloud_xyz, *cloud_ptr);
 		
 		//Transform preserved points into current frame and reset their lable
-		//TODO:Maybe somehow preserve lables/clusters?
 		//NOTE: We are not using matrix inverse cause it is unstable. Instead we fetch the inverse transformation directly
 		geometry_msgs::msg::TransformStamped transform_from_map_msg, transform_to_map_msg;
 		try{
-			transform_from_map_msg = tf_buffer_->lookupTransform(point_cloud_in->header.frame_id, "map", tf2::TimePointZero);//FIXME: Check for matching timestamp tf2_ros::fromMsg(t_link.header.stamp));
-			transform_to_map_msg = tf_buffer_->lookupTransform("map", point_cloud_in->header.frame_id, tf2::TimePointZero);//FIXME: Check for matching timestamp tf2_ros::fromMsg(t_link.header.stamp));
-			// rclcpp::Time now = this->get_clock()->now();
-			// transform_from_map_msg = tf_buffer_->lookupTransform(point_cloud_in->header.frame_id, "map", now, 500ms);
-			// transform_to_map_msg = tf_buffer_->lookupTransform("map", point_cloud_in->header.frame_id, now, 500ms);
+			transform_from_map_msg = tf_buffer_->lookupTransform(point_cloud_in->header.frame_id, "map", tf2::TimePointZero);
+			transform_to_map_msg = tf_buffer_->lookupTransform("map", point_cloud_in->header.frame_id, tf2::TimePointZero);
 		} catch (std::exception& e) {
 			RCLCPP_ERROR(this->get_logger(), "%s", e.what());
 			return;
@@ -871,9 +735,6 @@ void WallDetection::callbackPointCloud(const sensor_msgs::msg::PointCloud2::Cons
 			}
 			it->second->push_back(i);
 		}
-		// for (auto const &i: clustersUsed) {
-		// 	std::cout <<"label: "<< i.first << std::endl;
-    	// }
 
 		std::unordered_set<uint32_t> ignoreIDs;
 		if(clustersUsed.size() > 1){
@@ -884,17 +745,10 @@ void WallDetection::callbackPointCloud(const sensor_msgs::msg::PointCloud2::Cons
 			{
 				pcl::IndicesPtr leftWall = clustersUsed[wallIds.first];
 				pcl::IndicesPtr rightWall = clustersUsed[wallIds.second];
-				// std::cout << "leftWall indices:" << wallIds.first << std::endl;
-				// std::cout << "rightWall indices:" << wallIds.second << std::endl;
 				
-				if(leftWall->size() > 5 && rightWall->size() > 5){	//if(leftWall->size() > 2 && rightWall->size() > 2){
+				if(leftWall->size() > 5 && rightWall->size() > 5){
 					ignoreIDs.insert(wallIds.first);
 					ignoreIDs.insert(wallIds.second);
-
-					// for (auto const &i: ignoreIDs) {
-					// 	std::cout << i << " ";
-    				// }
-				
 
 					if (use_prediction_for_walls_ || use_prediction_for_obstacles_)
 					{
@@ -903,6 +757,7 @@ void WallDetection::callbackPointCloud(const sensor_msgs::msg::PointCloud2::Cons
 
 						if (use_prediction_for_walls_)
 						{
+							// its not really a prediction, it adds additional clusters to the walls, for a more stable and complete wall
 							for (const uint32_t id : additional_wall_ids.first)
 							{
 								//std::cout << "additional_wall_ids.first:" << id << std::endl;
