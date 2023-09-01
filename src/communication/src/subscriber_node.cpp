@@ -5,7 +5,42 @@
 
 void callback(const autoware_auto_perception_msgs::msg::PredictedObject::SharedPtr message, const std::string& robotName)
 {
-	  RCLCPP_INFO(rclcpp::get_logger("subscriber_node"), "'%s' received: '%d'",robotName.c_str(), message->object_id.uuid[0]);
+	// Check if the message contains the robot's name (ignore self messages) 
+    	//if (message->data.find(robotName) != std::string::npos) {
+        	//RCLCPP_INFO(rclcpp::get_logger("subscriber_node"), "Ignoring message with robot name: '%s'", robotName.c_str());
+        //	return;
+    	//}  
+
+	std::string robotUUID = robotName.substr(5);
+	int current = 0;
+	char char1, char2;
+	uint8_t uuid;
+
+	bool ownMessage = true;
+
+	for(std::string::iterator it = robotUUID.begin(); it != robotUUID.end() && current < 16 && ownMessage == true; it++) {
+			char1 = *it;
+
+			it++;
+			if(it == robotUUID.end()) {
+					char2 = 0;
+			} else {
+					char2 = *it;
+			}
+
+			uuid = (char1 - '0') << 4;
+			uuid += (char2 - '0') << 0;
+
+			if(uuid != message->object_id.uuid[current]) ownMessage = false;
+
+			current++;
+	}
+
+	if(ownMessage) {
+		//RCLCPP_INFO(rclcpp::get_logger("subscriber_node"), "Ignoring message with robot name: '%s'", robotName.c_str());
+	} else {
+		//RCLCPP_INFO(rclcpp::get_logger("subscriber_node"), "'%s' received: '%s'",robotName.c_str(), message->object_id.uuid[0]);
+	}
 }
 
 

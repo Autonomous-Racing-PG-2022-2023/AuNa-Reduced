@@ -13,6 +13,7 @@ rclcpp::Publisher<autoware_auto_perception_msgs::msg::PredictedObject>::SharedPt
 std::vector<autoware_auto_perception_msgs::msg::PredictedObject> messages;
 geometry_msgs::msg::PoseArray poses;
 geometry_msgs::msg::Vector3 linearVector;
+unique_identifier_msgs::msg::UUID uuid;
 
 
 // Storing Velocity Report in a Queue (messages). We do not want to pushlish every message directly, but have use scheduled publishing 
@@ -23,7 +24,7 @@ void velocityReportCallback(const autoware_auto_vehicle_msgs::msg::VelocityRepor
 }
 
 
-void pathCallback(const geometry_msgs::msg::PoseArray::SharedPtr msg, const int robotId) {
+void pathCallback(const geometry_msgs::msg::PoseArray::SharedPtr msg) {
         poses = *msg;
 
         autoware_auto_perception_msgs::msg::PredictedPath predicted_path;
@@ -32,9 +33,6 @@ void pathCallback(const geometry_msgs::msg::PoseArray::SharedPtr msg, const int 
 
         geometry_msgs::msg::PoseWithCovariance initial_pose_with_covariance;
         initial_pose_with_covariance.pose = poses.poses[0];
-
-        unique_identifier_msgs::msg::UUID object_id;
-        object_id.uuid[0] = robotId % 255;
 
         geometry_msgs::msg::Vector3 emptyVector;
         emptyVector.x = 0.0;
@@ -74,7 +72,7 @@ void pathCallback(const geometry_msgs::msg::PoseArray::SharedPtr msg, const int 
         shape.dimensions = dimensions;
 
         autoware_auto_perception_msgs::msg::PredictedObject predictedObject;
-        predictedObject.object_id = object_id;
+        predictedObject.object_id = uuid;
         predictedObject.existence_probability = 1.0;
         predictedObject.classification.push_back(classification);
         predictedObject.kinematics = kinematics;
@@ -125,7 +123,25 @@ int main(int argc, char** argv)
         //auto subscription = node->create_subscription<autoware_auto_vehicle_msgs::msg::VelocityReport>(
         //                                      "/robot0/vehicle/status/velocity_status",10,velocityReportCallback);
 
-        int robotId = std::stoi(robotName.substr(7,8));
+        std::string robotUUID = robotName.substr(5);
+        int current = 0;
+        char char1, char2;
+
+        for(std::string::iterator it = robotUUID.begin(); it != robotUUID.end() && current < 16; it++) {
+                char1 = *it;
+
+                it++;
+                if(it == robotUUID.end()) {
+                        char2 = 0;
+                } else {
+                        char2 = *it;
+                }
+
+                uuid.uuid[current] = (char1 - '0') << 4;
+                uuid.uuid[current] += (char2 - '0') << 0;
+
+                current++;
+        }
 
         linearVector.x = 0.0;
         linearVector.y = 0.0;
@@ -141,8 +157,8 @@ int main(int argc, char** argv)
         auto pathSub = node -> create_subscription<geometry_msgs::msg::PoseArray>(
                               "/"+robotName+ "/wallfollowing/debug/path/poses", 
                               10,
-                              [robotId] (const geometry_msgs::msg::PoseArray::SharedPtr msg) {
-                              pathCallback(msg, robotId);
+                              [] (const geometry_msgs::msg::PoseArray::SharedPtr msg) {
+                              pathCallback(msg);
                               });
 
         rclcpp::WallRate loop_rate(20); // 2 Hz (every 0.5 seconds)

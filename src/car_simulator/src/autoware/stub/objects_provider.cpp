@@ -11,6 +11,8 @@
 #include "autoware_auto_perception_msgs/msg/object_classification.hpp"
 #include "autoware_auto_perception_msgs/msg/predicted_object_kinematics.hpp"
 
+std::string robotName_;
+
 class ObjectsProvider : public rclcpp::Node
 {
 private:
@@ -154,16 +156,45 @@ private:
 
 	void callback(const autoware_auto_perception_msgs::msg::PredictedObject::SharedPtr message)
 	{
-		dynamic_objects[message->object_id.uuid[0]] = *message;
+		std::string robotUUID = robotName_.substr(5);
+		int current = 0;
+		char char1, char2;
+		uint8_t uuid;
+
+		bool ownMessage = true;
+
+		for(std::string::iterator it = robotUUID.begin(); it != robotUUID.end() && current < 16 && ownMessage == true; it++) {
+			char1 = *it;
+
+			it++;
+			if(it == robotUUID.end()) {
+					char2 = 0;
+			} else {
+					char2 = *it;
+			}
+
+			uuid = (char1 - '0') << 4;
+			uuid += (char2 - '0') << 0;
+
+			if(uuid != message->object_id.uuid[current]) ownMessage = false;
+
+			current++;
+		}
+
+		if(ownMessage) {
+			//RCLCPP_INFO(rclcpp::get_logger("subscriber_node"), "Ignoring message with robot name: '%s'", robotName_.c_str());
+		} else {
+			//RCLCPP_INFO(rclcpp::get_logger("subscriber_node"), "New Message: %d %d %s", uuid, message->object_id.uuid[--current], robotName_.c_str());
+			dynamic_objects[message->object_id.uuid[0]] = *message;
+		}
 	}
 
 };
 
 int main(int argc, char * argv[])
 {
-	std::string robotName;
 	if (argc > 1) {
-		robotName = argv[1];
+		robotName_ = argv[1];
 	} else {
 		RCLCPP_ERROR(rclcpp::get_logger("subscriber_node"), "Missing robot name argument");
 		return 1;

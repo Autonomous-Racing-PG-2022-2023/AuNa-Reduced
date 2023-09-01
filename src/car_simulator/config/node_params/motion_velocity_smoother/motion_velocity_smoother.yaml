@@ -2,16 +2,16 @@
   ros__parameters:
 
     # motion state constraints
-    max_velocity: 4.0    # max velocity limit [m/s]
+    max_velocity: 5.0    # max velocity limit [m/s]
 
-    max_accel: 1000.0       # Max acceleration limit [m/ss]
-    min_decel: -500.0       # Min deceleration limit [m/ss]
-    max_jerk: 1000.0        # Max jerk limit [m/sss]
-    min_jerk: -500.0        # Min jerk limit [m/sss]
+    max_accel: 10.0       # Max acceleration limit [m/ss]
+    min_decel: -10.0       # Min deceleration limit [m/ss]
+    max_jerk: 10.0        # Max jerk limit [m/sss]
+    min_jerk: -10.0        # Min jerk limit [m/sss]
 
     # curve parameters
     margin_to_insert_external_velocity_limit: 0.3   #  margin distance to insert external velocity limit [m]
-    max_lateral_accel: 0.5                      # max lateral acceleration limit [m/ss]
+    max_lateral_accel: 0.3                      # max lateral acceleration limit [m/ss]
     min_curve_velocity: 0.274                       # min velocity at lateral acceleration limit [m/ss]
     decel_distance_before_curve: 1.0               # slow speed distance before a curve for lateral acceleration limit
     decel_distance_after_curve: 0.8                 # slow speed distance after a curve for lateral acceleration limit
@@ -35,7 +35,7 @@
 
     # resampling parameters for optimization
     max_trajectory_length: 50.0         # max trajectory length for resampling [m]
-    min_trajectory_length: 0.5          # min trajectory length for resampling [m]
+    min_trajectory_length: 0.0         # min trajectory length for resampling [m]
     resample_time: 5.0                  # resample total time for dense sampling [s]
     dense_dt: 0.2                      # resample time interval for dense sampling [s]
     dense_reasmple_dt: 0.1             # resample time interval for dense sampling [s]
@@ -45,7 +45,7 @@
 
     # resampling parameters for post process
     post_max_trajectory_length: 50.0          # max trajectory length for resampling [m]
-    post_min_trajectory_length: 0.5           # min trajectory length for resampling [m]
+    post_min_trajectory_length: 0.0           # min trajectory length for resampling [m]
     post_resample_time: 5.0                   # resample total time for dense sampling [s]
     post_dense_resample_dt: 0.2              # resample time interval for dense sampling [s]
     post_dense_min_interval_distance: 0.1    # minimum points-interval length for dense sampling [m]
@@ -60,10 +60,8 @@
 
 
     jerk_weight: 1.0          # weight for "smoothness" cost for jerk
-    pseudo_jerk_weight: 1.0   # weight for "smoothness" cost
-    over_v_weight: 2.0       # weight for "over speed limit" cost
     pseudo_jerk_weight: 2.0   # weight for "smoothness" cost
-    over_v_weight: 5.0       # weight for "over speed limit" cost
+    over_v_weight: 1.0       # weight for "over speed limit" cost
     over_a_weight: 1.0        # weight for "over accel limit" cost
     over_j_weight: 1.0      # weight for "over jerk limit" cost
     

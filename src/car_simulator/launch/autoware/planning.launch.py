@@ -37,6 +37,8 @@ def generate_launch_description():
     
     remap_tf = SetRemap(src='/tf', dst='autoware/tf');
     remap_tf_static = SetRemap(src='/tf_static', dst='autoware/tf_static');
+
+    robot_name = LaunchConfiguration('name')
     
     #TODO:Add other parameters
     #FIXME:Check correctness of parameters
@@ -73,7 +75,8 @@ def generate_launch_description():
                         'publish_period': 100,
                         'dst_topic': 'predicted_objects',
                     }
-                ]
+                ],
+                arguments = [robot_name]
             )
         ]
     )
