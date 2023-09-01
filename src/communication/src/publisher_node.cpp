@@ -66,7 +66,7 @@ void pathCallback(const geometry_msgs::msg::PoseArray::SharedPtr msg) {
         autoware_auto_perception_msgs::msg::Shape shape;
         shape.type = 1;		// BOUNDING_BOX=0, CYLINDER=1, POLYGON=2
         geometry_msgs::msg::Vector3 dimensions;
-        dimensions.x = 1.0;
+        dimensions.x = 1.5;
         dimensions.y = 0.0;
         dimensions.z = 1.0;
         shape.dimensions = dimensions;
