@@ -18,6 +18,12 @@ def generate_launch_description():
     
     config_dir_obstacle_avoidance_planner = os.path.join(pkg_dir, 'config', 'node_params', 'obstacle_avoidance_planner')
     config_file_obstacle_avoidance_planner = os.path.join(config_dir_obstacle_avoidance_planner, 'obstacle_avoidance_planner.yaml')
+
+    config_dir_obstacle_cruise_planner = os.path.join(pkg_dir, 'config', 'node_params', 'obstacle_cruise_planner')
+    config_file_obstacle_cruise_planner = os.path.join(config_dir_obstacle_cruise_planner, 'obstacle_cruise_planner.yaml')
+
+    config_dir_obstacle_velocity_limiter = os.path.join(pkg_dir, 'config', 'node_params', 'obstacle_velocity_limiter')
+    config_file_obstacle_velocity_limiter = os.path.join(config_dir_obstacle_velocity_limiter, 'obstacle_velocity_limiter.yaml')
     
     config_dir_motion_velocity_smoother = os.path.join(pkg_dir, 'config', 'node_params', 'motion_velocity_smoother')
     config_file_motion_velocity_smoother = os.path.join(config_dir_motion_velocity_smoother, 'motion_velocity_smoother.yaml')
@@ -63,11 +69,11 @@ def generate_launch_description():
                 output='screen',
                 parameters=[
                     {
-                        'frame_id': [namespace, 'base_link'],
+                        'frame_id': 'map',
                         'publish_period': 100,
                         'dst_topic': 'predicted_objects',
                     }
-                ],
+                ]
             )
         ]
     )
@@ -79,9 +85,8 @@ def generate_launch_description():
             remap_tf,
             remap_tf_static,
             SetRemap(src='~/input/odometry', dst='odom'),
-            SetRemap(src='~/input/objects', dst='predicted_objects'),
             SetRemap(src='~/input/path', dst='wallfollowing/output/path'),
-            SetRemap(src='~/output/path', dst='obstacle_avoidance_planner/output/path'),
+            SetRemap(src='~/output/path', dst='obstacle_avoidance_planner/output/trajectory'),
             Node(
                 package='obstacle_avoidance_planner',
                 executable='obstacle_avoidance_planner_node',
@@ -97,6 +102,60 @@ def generate_launch_description():
             )
         ]
     )
+
+    #TODO:Add other parameters
+    #FIXME:Check correctness of parameters
+    start_autoware_obstacle_cruise_planner_cmd = GroupAction(
+        actions = [
+            remap_tf,
+            remap_tf_static,
+            SetRemap(src='~/input/odometry', dst='odom'),
+            SetRemap(src='~/input/objects', dst='predicted_objects'),
+            SetRemap(src='~/input/trajectory', dst='obstacle_avoidance_planner/output/trajectory'),
+             SetRemap(src='~/input/acceleration', dst='vehicle/status/acceleration'),
+            SetRemap(src='~/output/trajectory', dst='obstacle_cruise_planner/output/trajectory'),
+            Node(
+                package='obstacle_cruise_planner',
+                executable='obstacle_cruise_planner',
+                name='obstacle_cruise_planner',
+                namespace = namespace,
+                output='screen',
+                parameters=[
+                    config_file_vehicle,
+                    config_file_obstacle_cruise_planner,
+                    {
+                    }
+                ]
+            )
+        ]
+    )
+
+    #TODO:Add other parameters
+    #FIXME:Check correctness of parameters
+    start_autoware_obstacle_velocity_limiter_cmd = GroupAction(
+        actions = [
+            remap_tf,
+            remap_tf_static,
+            SetRemap(src='~/input/odometry', dst='odom'),
+            SetRemap(src='~/input/dynamic_obstacles', dst='predicted_objects'),
+            SetRemap(src='~/input/trajectory', dst='obstacle_avoidance_planner/output/trajectory'),
+            SetRemap(src='~/input/obstacle_pointcloud', dst='wall_detection/output/obstacles'),
+            SetRemap(src='~/output/trajectory', dst='obstacle_velocity_limiter/output/trajectory'),
+            Node(
+                package='obstacle_velocity_limiter',
+                executable='obstacle_velocity_limiter',
+                name='obstacle_velocity_limiter',
+                namespace = namespace,
+                output='screen',
+                parameters=[
+                    config_file_vehicle,
+                    config_file_obstacle_velocity_limiter,
+                    {
+                    }
+                ]
+            )
+        ]
+    )
     
     #TODO:Add other parameters
     #FIXME:Check correctness of parameters
@@ -105,7 +164,7 @@ def generate_launch_description():
             remap_tf,
             remap_tf_static,
             SetRemap(src='/localization/kinematic_state', dst='odom'),
-            SetRemap(src='~/input/trajectory', dst='obstacle_avoidance_planner/output/path'),
+            SetRemap(src='~/input/trajectory', dst='obstacle_cruise_planner/output/trajectory'),
             SetRemap(src='~/output/trajectory', dst='motion_velocity_smoother/output/trajectory'),
             SetRemap(src='~/input/external_velocity_limit_mps', dst='planning/scenario_planning/max_velocity'),
             SetRemap(src='~/output/current_velocity_limit_mps', dst='motion_velocity_smoother/output/current_max_velocity'),
@@ -129,8 +188,10 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     #ld.add_action(start_autoware_external_velocity_limit_selector_cmd)
-    #ld.add_action(start_objects_provider_cmd)
+    ld.add_action(start_objects_provider_cmd)
     ld.add_action(start_autoware_obstacle_avoidance_planner_cmd)
+    ld.add_action(start_autoware_obstacle_cruise_planner_cmd)
+    #ld.add_action(start_autoware_obstacle_velocity_limiter_cmd)
     ld.add_action(start_autoware_motion_velocity_smoother_cmd)
 
     return ld

@@ -14,6 +14,8 @@ find_package(autoware_auto_vehicle_msgs REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
+find_package(autoware_auto_perception_msgs REQUIRED)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
@@ -26,10 +28,10 @@ if(BUILD_TESTING)
 endif()
 
 add_executable(publisher_node src/publisher_node.cpp)
-ament_target_dependencies(publisher_node rclcpp std_msgs autoware_auto_vehicle_msgs)
+ament_target_dependencies(publisher_node rclcpp std_msgs autoware_auto_vehicle_msgs autoware_auto_perception_msgs)
 
 add_executable(subscriber_node src/subscriber_node.cpp)
-ament_target_dependencies(subscriber_node rclcpp std_msgs)
+ament_target_dependencies(subscriber_node rclcpp std_msgs autoware_auto_perception_msgs)
 
 install(TARGETS
 	  publisher_node

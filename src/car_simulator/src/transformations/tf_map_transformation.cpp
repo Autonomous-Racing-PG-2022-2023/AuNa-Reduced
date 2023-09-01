@@ -23,30 +23,32 @@ double yaw_;
 double pitch_;
 double roll_;
 
+rclcpp::Publisher<tf2_msgs::msg::TFMessage>::SharedPtr static_tf_publisher_;
+
 
 bool frame_id_is_identity;
 
 
 public:
-  explicit StaticFramePublisher(char * transformation[])
-  : Node("tf_publish_static_map")
-  {
+	explicit StaticFramePublisher(char * transformation[])
+	: Node("tf_publish_static_map")
+	{
 
-    src_ = this->declare_parameter("src_", "");
-	dst_ = this->declare_parameter("dst_", "");
+		src_ = this->declare_parameter("src_", "");
+		dst_ = this->declare_parameter("dst_", "");
 
-    dst_tf_static_ = this->declare_parameter("dst_tf_static", "tf_static");
+		dst_tf_static_ = this->declare_parameter("dst_tf_static", "tf_static");
 
-    translation_x_ = this->declare_parameter("translation_x_", 0.0);
-    translation_y_ = this->declare_parameter("translation_y_", 0.0);
-    translation_z_ = this->declare_parameter("translation_z_", 0.0);
-    yaw_ = this->declare_parameter("yaw_", 0.0);
-    pitch_ = this->declare_parameter("pitch_", 0.0);
-    translation_x_ = this->declare_parameter("roll_", 0.0);
+		translation_x_ = this->declare_parameter("translation_x_", 0.0);
+		translation_y_ = this->declare_parameter("translation_y_", 0.0);
+		translation_z_ = this->declare_parameter("translation_z_", 0.0);
+		yaw_ = this->declare_parameter("yaw_", 0.0);
+		pitch_ = this->declare_parameter("pitch_", 0.0);
+		translation_x_ = this->declare_parameter("roll_", 0.0);
 
-    frame_id_is_identity = (src_ == dst_);
+		frame_id_is_identity = (src_ == dst_);
 
-    if(frame_id_is_identity){
+		if(frame_id_is_identity){
 			RCLCPP_INFO_THROTTLE(
 				get_logger(),
 				*get_clock(),
@@ -61,38 +63,37 @@ public:
 				rclcpp::QoS(1)
 					.keep_all()
 					.transient_local()// Ensure nodes that subscribe late still receive
-									  // static transformation
+										// static transformation
 			);
 
 			RCLCPP_INFO_THROTTLE(
 				get_logger(),
 				*get_clock(),
 				std::chrono::milliseconds(1000).count(),
-				"Mapping frames to %s. From frames %s to %s.",,
+				"Mapping frames to %s. From frames %s to %s.",
 				dst_tf_static_.c_str(),
 				src_.c_str(),
 				dst_.c_str()
 			);
 
-            //Send transform
-            tf2_msgs::msg::TFMessage message;
-            geometry_msgs::msg::TransformStamped t;
-            t.header.frame_id = frame_id_;
-            t.header.stamp = this->get_clock()->now();
-            t.child_frame_id = child_frame_id_;
-            
-            t.transform.translation.x = translation_x_;
-            t.transform.translation.y = translation_y_;
-            t.transform.translation.z = translation_z_;
-            t.transform.rotation = tf2::Quaternion(yaw_, pitch_, roll_);
-            message.transforms.push_back(t);
+			//Send transform
+			tf2_msgs::msg::TFMessage message;
+			geometry_msgs::msg::TransformStamped t;
+			t.header.frame_id = frame_id_;
+			t.header.stamp = this->get_clock()->now();
+			t.child_frame_id = child_frame_id_;
+			
+			t.transform.translation.x = translation_x_;
+			t.transform.translation.y = translation_y_;
+			t.transform.translation.z = translation_z_;
+			t.transform.rotation = tf2::Quaternion(yaw_, pitch_, roll_);
+			message.transforms.push_back(t);
 
-            sendStaticTransform(message);
-            rclcpp::shutdown();
+			sendStaticTransform(message);
+			rclcpp::shutdown();
 
 		}
 	}
-  }
 
 private:
   void sendStaticTransform(const tf2_msgs::msg::TFMessage& msg) {

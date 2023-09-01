@@ -12,6 +12,14 @@
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 
+  <depend>autoware_auto_control_msgs</depend>
+  <depend>autoware_auto_perception_msgs</depend>
+  <depend>autoware_auto_planning_msgs</depend>
+  <depend>autoware_auto_vehicle_msgs</depend>
+  <depend>tier4_autoware_utils</depend>
+  <depend>autoware_ad_api_specs</depend>
+  <depend>component_interface_utils</depend>
+
   <export>
     <build_type>ament_cmake</build_type>
   </export>

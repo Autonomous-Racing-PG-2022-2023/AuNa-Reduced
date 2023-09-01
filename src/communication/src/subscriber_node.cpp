@@ -1,19 +1,11 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 
-void callback(const std_msgs::msg::String::SharedPtr message, const std::string& robotName)
+#include "autoware_auto_perception_msgs/msg/predicted_object.hpp"
+
+void callback(const autoware_auto_perception_msgs::msg::PredictedObject::SharedPtr message, const std::string& robotName)
 {
-	// Check if the message contains the robot's name (ignore self messages) 
-    	if (message->data.find(robotName) != std::string::npos) {
-        	//RCLCPP_INFO(rclcpp::get_logger("subscriber_node"), "Ignoring message with robot name: '%s'", robotName.c_str());
-        	return;
-    	}  
-	RCLCPP_INFO(rclcpp::get_logger("subscriber_node"), "'%s' received: '%s'",robotName.c_str(), message->data.c_str());
-
-
-	//future works:
-	//store the messages in a queue and process them to improve the performance 
-	//Having velocity, direction and postion of other cars can contribute to a better estimation of the robot's own position  
+	  RCLCPP_INFO(rclcpp::get_logger("subscriber_node"), "'%s' received: '%d'",robotName.c_str(), message->object_id.uuid[0]);
 }
 
 
@@ -31,9 +23,9 @@ int main(int argc, char** argv)
 	//creating subscription on global communication topic		
 	rclcpp::init(argc, argv); 
 	auto node = rclcpp::Node::make_shared("subscriber_node");
-	auto subscription = node->create_subscription<std_msgs::msg::String>(
-			        "/comm_topic", 10,
-				[robotName](const std_msgs::msg::String::SharedPtr message) {
+	auto subscription = node->create_subscription<autoware_auto_perception_msgs::msg::PredictedObject>(
+			        "/topic", 10,
+				[robotName](const autoware_auto_perception_msgs::msg::PredictedObject::SharedPtr message) {
 				callback(message, robotName);
 				});
 
