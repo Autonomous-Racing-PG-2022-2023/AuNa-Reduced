@@ -48,38 +48,29 @@ Run the following commands in the terminal before using ROS2:
 ```
 ├── car_simulator
 │   ├── car_simulator
-│   │   └── yaml_launch.py  #Includes commands to read and configure .yaml files
-│   ├── CMakeLists.txt
-│   ├── config
-│   │   ├── map_params #Parameter files for maps, such as spawn locations and others
-│   │   ├── model_params # Model paramters of each robot model
-│   │   ├── nav2_params # Navigation parameters for Nav2 nodes
-│   │   └── scenario_params # Scenario parameters for robot nodes
+│   │   ├── yaml_launch.py  # Includes commands to read and configure .yaml files
+│   │   └── set_parameters_from_file.py  # Allows loading parameters for nodes from file. Not needed in later ROS versions cause already built-in there
+│   ├── CMakeLists.txt # For compiling nodes
+│   ├── package.xml # Also needs to be cahnged when adding new custom (self-written) node
+│   ├── config # Contains parameter files (not weel sorted)
 │   ├── include # Include files for scripts in src
-│   ├── launch # Launch files
-│   │   ├── gazebo # Gazebo launch files for arbitrary world files
-│   │   ├── navigation # Navigation launch files for single and multiple robots
-│   │   ├── omnet # OMNeT++ launch files to launch bridge-nodes for communication with OMNeT++ and Artery
-│   │   ├── scenarios # Currently implemented launch files for custom scenarios
-│   │   └── spawn # Launch files to correctly spawn robots in Gazebo
+│   ├── launch # Launch files (not weel sorted)
 │   ├── maps # Map files for Gazebo worlds
-│   │   └── racetrack_decorated
-│   ├── matlab
-│   │   ├── CACC # Platooning controller implementation in MATLAB and Simulink
 │   ├── models # Implemented robot models and world model files
-│   │   ├── prius_custom
-│   │   ├── race_car
-│   │   └── racetrack
-│   ├── package.xml
 │   ├── rviz # RViz configuration files for scenarios
-│   ├── scripts # Python scripts for scenarios and tools
+│   ├── scripts # Python scripts for scenarios and tools (Not used by us)
 │   │   ├── teleoperation # Scripts for keyboard controls
 │   ├── src # C++ scripts
-│   │   ├── omnet # OMNeT++ bridge-nodes
-│   │   └── transformations # Transformation nodes for multi-robot setups
+│   │   ├── autoware # Nodes for interface to autoware
+│   │   ├── path_generation # Wallfollowing
+│   │   ├── laser_to_pointcloud # Converts Lidar scan to pointcloud. (Actually Autoware already has such a node, so maybe not needed)
+│   │   └── transformations # Transformation nodes (for handling tzf topics and frames)
 │   └── worlds # World files for Gazebo
-├── etsi_its_msgs # ETSI-ITS-G5 messages for OMNeT++ and Artery
-└── ros_its_msgs # CAM simple message format
+├── communication # Communication nodes (maybe should be merged into rest of the project)
+├── car_simulator_msgs # Messages for car_simulator
+├── car_simulator_rviz_plugins # Visualization of car_simulator_msgs
+├── ros_its_msgs # CAM simple message format
+└── Other # Not important
 ```
 	
 ## How to use?
@@ -89,10 +80,6 @@ ___
 After building the package, the currently implemented scenarios can be found in */src/car_simulator/launch/scenarios*. The multi-robot navigation scenario can be launched as follows:
 
     ros2 launch car_simulator scenario_robot_racetrack.launch.py robot_number:=4
-    
-Make the car drive using:
-    
-    ros2 topic pub --once /robot/cmd_vel geometry_msgs/msg/Twist "{linear: {x: 0.0, y: 0.0, z: 0.1}, angular: {x: 0.0, y: 0.0, z: 0.0}}"
     
 ## Acknowledgements
 
